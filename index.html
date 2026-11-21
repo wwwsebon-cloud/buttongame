@@ -20,6 +20,7 @@
     font-family: "Pretendard", "Inter", "Segoe UI", system-ui, sans-serif;
     overflow: hidden;
     user-select: none;
+    touch-action: manipulation;
   }
 
   .screen {
@@ -70,8 +71,11 @@
     height: min(42vmin, 320px);
     font-size: 20px;
     border-radius: 50%;
+    touch-action: manipulation;
+    transition: transform 0.05s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease;
   }
-  #game-btn:active { transform: scale(0.9); }
+  #game-btn:active,
+  #game-btn.pressed { transform: scale(0.91); }
 
   .score {
     font-size: 64px;
@@ -100,35 +104,123 @@
   .back:hover { color: #fff; }
 
   /* 패치노트 */
+  .notes-wrap {
+    width: min(560px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .notes-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  }
+  .notes-title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .notes-count {
+    font-size: 12px;
+    color: #777;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+  }
   .notes {
-    width: min(560px, 88vw);
     max-height: 62vh;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 14px;
+    padding-right: 2px;
     scrollbar-width: none;
   }
   .notes::-webkit-scrollbar { display: none; }
+  .note-card {
+    position: relative;
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.025);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .note-card:hover {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.045);
+  }
+  .note-card.latest {
+    border-color: rgba(255, 255, 255, 0.38);
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .note-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .note-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
   .note-version {
-    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     color: #fff;
+  }
+  .note-card.latest .note-version {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+  .note-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #aaa;
+    text-transform: uppercase;
   }
   .note-date {
     font-size: 12px;
     color: #666;
-    margin-left: 10px;
     letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
   }
   .note-list {
-    margin-top: 8px;
-    padding-left: 18px;
-    color: #bbb;
-    font-size: 15px;
-    line-height: 1.6;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #ccc;
+    font-size: 14px;
+    line-height: 1.55;
   }
+  .note-list li {
+    position: relative;
+    padding-left: 14px;
+  }
+  .note-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #777;
+  }
+  .note-card.latest .note-list { color: #eee; }
+  .note-card.latest .note-list li::before { background: #fff; }
 </style>
 </head>
 <body>
@@ -150,13 +242,27 @@
   <!-- 패치노트 -->
   <section id="notes" class="screen">
     <button class="back" data-go="title">← 나가기</button>
-    <div class="notes" id="notes-list"></div>
+    <div class="notes-wrap">
+      <div class="notes-header">
+        <h2 class="notes-title">Patch Notes</h2>
+        <span class="notes-count" id="notes-count"></span>
+      </div>
+      <div class="notes" id="notes-list"></div>
+    </div>
   </section>
 
 <script>
   // ===== 패치노트 데이터 =====
   // 업데이트할 때마다 맨 위에 새 항목을 추가하세요. (v1부터 1씩 증가)
   const PATCH_NOTES = [
+    {
+      version: 2,
+      date: "2026-11-21",
+      changes: [
+        "패치노트 UI를 블랙 & 화이트 카드 스타일로 개선",
+        "버튼 입력 딜레이 제거 (누르는 즉시 반응)",
+      ],
+    },
     {
       version: 1,
       date: "2025-01-01",
@@ -182,13 +288,23 @@
   // ===== 패치노트 렌더링 =====
   function renderNotes() {
     const list = document.getElementById("notes-list");
-    list.innerHTML = PATCH_NOTES.map(n => `
-      <div>
-        <div class="note-version">v${n.version}<span class="note-date">${n.date}</span></div>
+    const count = document.getElementById("notes-count");
+    const latestVersion = PATCH_NOTES[0]?.version ?? 0;
+    count.textContent = `LATEST v${latestVersion}`;
+
+    list.innerHTML = PATCH_NOTES.map((n, idx) => `
+      <article class="note-card${idx === 0 ? " latest" : ""}">
+        <div class="note-head">
+          <div class="note-meta">
+            <span class="note-version">v${n.version}</span>
+            ${idx === 0 ? '<span class="note-badge">LATEST</span>' : ""}
+          </div>
+          <span class="note-date">${n.date}</span>
+        </div>
         <ul class="note-list">
           ${n.changes.map(c => `<li>${c}</li>`).join("")}
         </ul>
-      </div>
+      </article>
     `).join("");
   }
   renderNotes();
@@ -203,12 +319,36 @@
     scoreEl.textContent = score;
   }
 
-  gameBtn.addEventListener("click", () => {
+  function pressButton() {
     score += 1;
     scoreEl.textContent = score;
     scoreEl.classList.remove("bump");
     void scoreEl.offsetWidth; // 애니메이션 재시작
     scoreEl.classList.add("bump");
+  }
+
+  gameBtn.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    gameBtn.classList.add("pressed");
+    pressButton();
+  });
+
+  const releaseVisual = () => gameBtn.classList.remove("pressed");
+  gameBtn.addEventListener("pointerup", releaseVisual);
+  gameBtn.addEventListener("pointercancel", releaseVisual);
+  gameBtn.addEventListener("pointerleave", releaseVisual);
+
+  gameBtn.addEventListener("keydown", (e) => {
+    if ((e.key === "Enter" || e.key === " ") && !e.repeat) {
+      e.preventDefault();
+      gameBtn.classList.add("pressed");
+      pressButton();
+    }
+  });
+  gameBtn.addEventListener("keyup", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      releaseVisual();
+    }
   });
 
   // ===== 버튼 이벤트 =====
