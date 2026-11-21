@@ -66,6 +66,30 @@
   }
 
   /* 인게임 */
+  #ball-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  #game > :not(#ball-canvas) {
+    position: relative;
+    z-index: 1;
+  }
+  #game > .back,
+  #game > .upgrade-tab-btn,
+  #game > .upgrade-panel {
+    position: fixed;
+  }
+  #game > .back,
+  #game > .upgrade-tab-btn {
+    z-index: 10;
+  }
+  #game > .upgrade-panel {
+    z-index: 20;
+  }
   #game-btn {
     width: min(42vmin, 320px);
     height: min(42vmin, 320px);
@@ -352,6 +376,7 @@
 
   <!-- 인게임 -->
   <section id="game" class="screen">
+    <canvas id="ball-canvas"></canvas>
     <button class="back" data-go="title">← 나가기</button>
     <button class="upgrade-tab-btn" id="btn-upgrade-tab">업그레이드</button>
     <div class="score" id="score">0</div>
@@ -369,6 +394,20 @@
             <span class="upgrade-desc">클릭당 점수 1 → 2 (1회 한정)</span>
           </div>
           <button class="btn upgrade-buy" id="btn-buy-double">100점</button>
+        </div>
+        <div class="upgrade-item">
+          <div class="upgrade-info">
+            <span class="upgrade-name">바운스 볼 <span id="ball-count" style="color:#777;font-weight:500;">(0)</span></span>
+            <span class="upgrade-desc">벽·버튼에 튕길 때마다 +2점</span>
+          </div>
+          <button class="btn upgrade-buy" id="btn-buy-ball">200점</button>
+        </div>
+        <div class="upgrade-item">
+          <div class="upgrade-info">
+            <span class="upgrade-name">파워 클릭</span>
+            <span class="upgrade-desc">클릭당 점수 +3 (1회 한정)</span>
+          </div>
+          <button class="btn upgrade-buy" id="btn-buy-plus3">300점</button>
         </div>
       </div>
     </div>
@@ -390,6 +429,14 @@
   // ===== 패치노트 데이터 =====
   // 업데이트할 때마다 맨 위에 새 항목을 추가하세요. (v1부터 1씩 증가)
   const PATCH_NOTES = [
+    {
+      version: 4,
+      date: "2026-11-21",
+      changes: [
+        "바운스 볼 업그레이드 추가 (200점 소모, 벽·버튼에 튕길 때마다 +2점)",
+        "파워 클릭 업그레이드 추가 (300점 소모, 클릭당 점수 +3)",
+      ],
+    },
     {
       version: 3,
       date: "2026-11-21",
@@ -458,6 +505,8 @@
   let pointsPerClick = 1;
   let upgradeUnlocked = false;
   let doubleBought = false;
+  let plus3Bought = false;
+  let balls = [];
 
   const scoreEl = document.getElementById("score");
   const gameBtn = document.getElementById("game-btn");
@@ -465,6 +514,30 @@
   const upgradePanel = document.getElementById("upgrade-panel");
   const upgradeCloseBtn = document.getElementById("btn-upgrade-close");
   const buyDoubleBtn = document.getElementById("btn-buy-double");
+  const buyBallBtn = document.getElementById("btn-buy-ball");
+  const buyPlus3Btn = document.getElementById("btn-buy-plus3");
+  const ballCountEl = document.getElementById("ball-count");
+
+  const ballCanvas = document.getElementById("ball-canvas");
+  const ctx = ballCanvas.getContext("2d");
+
+  function resizeCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    ballCanvas.width = Math.floor(window.innerWidth * dpr);
+    ballCanvas.height = Math.floor(window.innerHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  function addScore(amount) {
+    score += amount;
+    scoreEl.textContent = score;
+    scoreEl.classList.remove("bump");
+    void scoreEl.offsetWidth; // 애니메이션 재시작
+    scoreEl.classList.add("bump");
+    updateUpgradeUI();
+  }
 
   function updateUpgradeUI() {
     upgradeTabBtn.classList.toggle("visible", upgradeUnlocked);
@@ -475,6 +548,50 @@
       buyDoubleBtn.textContent = "100점";
       buyDoubleBtn.disabled = score < 100;
     }
+
+    ballCountEl.textContent = `(${balls.length})`;
+    buyBallBtn.disabled = score < 200;
+
+    if (plus3Bought) {
+      buyPlus3Btn.textContent = "완료";
+      buyPlus3Btn.disabled = true;
+    } else {
+      buyPlus3Btn.textContent = "300점";
+      buyPlus3Btn.disabled = score < 300;
+    }
+  }
+
+  function spawnBall() {
+    const r = 10;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const btnRect = gameBtn.getBoundingClientRect();
+    const bcx = btnRect.left + btnRect.width / 2;
+    const bcy = btnRect.top + btnRect.height / 2;
+    const br = btnRect.width / 2;
+
+    // 버튼과 겹치지 않는 위치에 생성
+    let x = r + 20;
+    let y = r + 20;
+    for (let i = 0; i < 20; i++) {
+      const tx = r + 20 + Math.random() * Math.max(10, w - (r + 20) * 2);
+      const ty = r + 20 + Math.random() * Math.max(10, h - (r + 20) * 2);
+      if (Math.hypot(tx - bcx, ty - bcy) > br + r + 24) {
+        x = tx;
+        y = ty;
+        break;
+      }
+    }
+
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 260 + Math.random() * 80;
+    balls.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      r,
+    });
   }
 
   function resetGame() {
@@ -483,24 +600,103 @@
     pointsPerClick = 1;
     upgradeUnlocked = false;
     doubleBought = false;
+    plus3Bought = false;
+    balls = [];
     scoreEl.textContent = score;
     upgradePanel.classList.remove("open");
+    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     updateUpgradeUI();
   }
 
   function pressButton() {
     totalClicks += 1;
-    score += pointsPerClick;
-    scoreEl.textContent = score;
-    scoreEl.classList.remove("bump");
-    void scoreEl.offsetWidth; // 애니메이션 재시작
-    scoreEl.classList.add("bump");
-
     if (!upgradeUnlocked && totalClicks >= 100) {
       upgradeUnlocked = true;
     }
-    updateUpgradeUI();
+    addScore(pointsPerClick);
   }
+
+  // 공 물리 & 렌더링 루프
+  let lastFrameTime = performance.now();
+  function animateBalls(now) {
+    const dt = Math.min((now - lastFrameTime) / 1000, 0.05);
+    lastFrameTime = now;
+
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    ctx.clearRect(0, 0, w, h);
+
+    if (screens.game.classList.contains("active") && balls.length > 0) {
+      const btnRect = gameBtn.getBoundingClientRect();
+      const bcx = btnRect.left + btnRect.width / 2;
+      const bcy = btnRect.top + btnRect.height / 2;
+      const br = btnRect.width / 2;
+
+      let bounceCount = 0;
+
+      for (const b of balls) {
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+
+        // 화면 벽 충돌
+        if (b.x - b.r <= 0) {
+          b.x = b.r;
+          b.vx = Math.abs(b.vx);
+          bounceCount += 1;
+        } else if (b.x + b.r >= w) {
+          b.x = w - b.r;
+          b.vx = -Math.abs(b.vx);
+          bounceCount += 1;
+        }
+
+        if (b.y - b.r <= 0) {
+          b.y = b.r;
+          b.vy = Math.abs(b.vy);
+          bounceCount += 1;
+        } else if (b.y + b.r >= h) {
+          b.y = h - b.r;
+          b.vy = -Math.abs(b.vy);
+          bounceCount += 1;
+        }
+
+        // 중앙 버튼(원형) 충돌
+        const dx = b.x - bcx;
+        const dy = b.y - bcy;
+        const dist = Math.hypot(dx, dy);
+        const minDist = br + b.r;
+        if (dist < minDist) {
+          const nx = dist === 0 ? 1 : dx / dist;
+          const ny = dist === 0 ? 0 : dy / dist;
+          b.x = bcx + nx * minDist;
+          b.y = bcy + ny * minDist;
+
+          const dot = b.vx * nx + b.vy * ny;
+          if (dot < 0) {
+            b.vx -= 2 * dot * nx;
+            b.vy -= 2 * dot * ny;
+            bounceCount += 1;
+          }
+        }
+
+        // 공 그리기 (블랙 & 화이트 테마)
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
+        ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      if (bounceCount > 0) {
+        addScore(bounceCount * 2);
+      }
+    }
+
+    requestAnimationFrame(animateBalls);
+  }
+  requestAnimationFrame(animateBalls);
 
   upgradeTabBtn.addEventListener("click", () => {
     updateUpgradeUI();
@@ -520,8 +716,25 @@
   buyDoubleBtn.addEventListener("click", () => {
     if (doubleBought || score < 100) return;
     score -= 100;
-    pointsPerClick = 2;
+    pointsPerClick += 1;
     doubleBought = true;
+    scoreEl.textContent = score;
+    updateUpgradeUI();
+  });
+
+  buyBallBtn.addEventListener("click", () => {
+    if (score < 200) return;
+    score -= 200;
+    spawnBall();
+    scoreEl.textContent = score;
+    updateUpgradeUI();
+  });
+
+  buyPlus3Btn.addEventListener("click", () => {
+    if (plus3Bought || score < 300) return;
+    score -= 300;
+    pointsPerClick += 3;
+    plus3Bought = true;
     scoreEl.textContent = score;
     updateUpgradeUI();
   });
