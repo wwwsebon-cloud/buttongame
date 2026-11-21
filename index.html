@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUTTON</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    background: #000;
+    color: #fff;
+    font-family: "Pretendard", "Inter", "Segoe UI", system-ui, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .screen.active { opacity: 1; pointer-events: auto; }
+
+  .btn {
+    appearance: none;
+    border: none;
+    background: #fff;
+    color: #000;
+    font: inherit;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.25s ease, background 0.2s ease;
+  }
+  .btn:hover { box-shadow: 0 0 32px rgba(255, 255, 255, 0.35); }
+  .btn:active { transform: scale(0.94); }
+
+  .btn.menu {
+    width: min(260px, 70vw);
+    padding: 18px 0;
+    font-size: 16px;
+  }
+
+  .title {
+    font-size: clamp(40px, 9vw, 72px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+  }
+
+  /* 인게임 */
+  #game-btn {
+    width: min(42vmin, 320px);
+    height: min(42vmin, 320px);
+    font-size: 20px;
+    border-radius: 50%;
+  }
+  #game-btn:active { transform: scale(0.9); }
+
+  .score {
+    font-size: 64px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-height: 1em;
+  }
+  .score.bump { animation: bump 0.18s ease; }
+  @keyframes bump {
+    from { transform: scale(1.18); }
+    to   { transform: scale(1); }
+  }
+
+  .back {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: none;
+    border: none;
+    color: #888;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .back:hover { color: #fff; }
+
+  /* 패치노트 */
+  .notes {
+    width: min(560px, 88vw);
+    max-height: 62vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    scrollbar-width: none;
+  }
+  .notes::-webkit-scrollbar { display: none; }
+  .note-version {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #fff;
+  }
+  .note-date {
+    font-size: 12px;
+    color: #666;
+    margin-left: 10px;
+    letter-spacing: 0.04em;
+  }
+  .note-list {
+    margin-top: 8px;
+    padding-left: 18px;
+    color: #bbb;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+  <!-- 타이틀 -->
+  <section id="title" class="screen active">
+    <h1 class="title">BUTTON</h1>
+    <button class="btn menu" id="btn-start">게임 시작</button>
+    <button class="btn menu" id="btn-notes">패치노트</button>
+  </section>
+
+  <!-- 인게임 -->
+  <section id="game" class="screen">
+    <button class="back" data-go="title">← 나가기</button>
+    <div class="score" id="score">0</div>
+    <button class="btn" id="game-btn">PRESS</button>
+  </section>
+
+  <!-- 패치노트 -->
+  <section id="notes" class="screen">
+    <button class="back" data-go="title">← 나가기</button>
+    <div class="notes" id="notes-list"></div>
+  </section>
+
+<script>
+  // ===== 패치노트 데이터 =====
+  // 업데이트할 때마다 맨 위에 새 항목을 추가하세요. (v1부터 1씩 증가)
+  const PATCH_NOTES = [
+    {
+      version: 1,
+      date: "2025-01-01",
+      changes: [
+        "최초 출시",
+        "버튼을 누르면 1점 획득",
+      ],
+    },
+  ];
+
+  // ===== 화면 전환 =====
+  const screens = {
+    title: document.getElementById("title"),
+    game: document.getElementById("game"),
+    notes: document.getElementById("notes"),
+  };
+
+  function go(name) {
+    Object.values(screens).forEach(s => s.classList.remove("active"));
+    screens[name].classList.add("active");
+  }
+
+  // ===== 패치노트 렌더링 =====
+  function renderNotes() {
+    const list = document.getElementById("notes-list");
+    list.innerHTML = PATCH_NOTES.map(n => `
+      <div>
+        <div class="note-version">v${n.version}<span class="note-date">${n.date}</span></div>
+        <ul class="note-list">
+          ${n.changes.map(c => `<li>${c}</li>`).join("")}
+        </ul>
+      </div>
+    `).join("");
+  }
+  renderNotes();
+
+  // ===== 인게임 로직 =====
+  let score = 0;
+  const scoreEl = document.getElementById("score");
+  const gameBtn = document.getElementById("game-btn");
+
+  function resetGame() {
+    score = 0;
+    scoreEl.textContent = score;
+  }
+
+  gameBtn.addEventListener("click", () => {
+    score += 1;
+    scoreEl.textContent = score;
+    scoreEl.classList.remove("bump");
+    void scoreEl.offsetWidth; // 애니메이션 재시작
+    scoreEl.classList.add("bump");
+  });
+
+  // ===== 버튼 이벤트 =====
+  document.getElementById("btn-start").addEventListener("click", () => {
+    resetGame();
+    go("game");
+  });
+  document.getElementById("btn-notes").addEventListener("click", () => go("notes"));
+  document.querySelectorAll("[data-go]").forEach(b =>
+    b.addEventListener("click", () => go(b.dataset.go))
+  );
+</script>
+</body>
+</html>
