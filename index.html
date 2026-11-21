@@ -93,6 +93,8 @@
   #game-btn {
     width: min(42vmin, 320px);
     height: min(42vmin, 320px);
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
     font-size: 20px;
     border-radius: 50%;
     touch-action: manipulation;
@@ -132,20 +134,32 @@
     position: fixed;
     top: 20px;
     right: 20px;
-    padding: 8px 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.32);
+    border: 1px solid rgba(255, 255, 255, 0.34);
     background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
     color: #fff;
     font: inherit;
     font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
     transform: translateY(-6px);
-    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease, border-color 0.2s ease;
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .upgrade-tab-btn::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.9);
   }
   .upgrade-tab-btn.visible {
     opacity: 1;
@@ -156,18 +170,24 @@
     background: #fff;
     color: #000;
     border-color: #fff;
+    box-shadow: 0 0 24px rgba(255, 255, 255, 0.28);
+  }
+  .upgrade-tab-btn:hover::before {
+    background: #000;
+    box-shadow: none;
   }
   .upgrade-panel {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.82);
-    backdrop-filter: blur(8px);
+    background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.88) 65%);
+    backdrop-filter: blur(14px);
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 20px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.22s ease;
+    transition: opacity 0.24s ease;
     z-index: 20;
   }
   .upgrade-panel.open {
@@ -175,70 +195,195 @@
     pointer-events: auto;
   }
   .upgrade-box {
-    width: min(400px, 88vw);
-    padding: 24px;
-    border-radius: 20px;
+    position: relative;
+    width: min(460px, 92vw);
+    max-height: 84vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding: 26px;
+    border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    background: #0a0a0a;
+    background: linear-gradient(180deg, rgba(22, 22, 22, 0.96) 0%, rgba(8, 8, 8, 0.98) 100%);
+    box-shadow:
+      0 24px 80px rgba(0, 0, 0, 0.85),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+      0 1px 0 rgba(255, 255, 255, 0.22) inset;
     display: flex;
     flex-direction: column;
     gap: 18px;
+    transform: translateY(10px) scale(0.97);
+    transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .upgrade-box::-webkit-scrollbar { display: none; }
+  .upgrade-panel.open .upgrade-box {
+    transform: translateY(0) scale(1);
   }
   .upgrade-box-head {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    gap: 12px;
+  }
+  .upgrade-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .upgrade-eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: #777;
+    text-transform: uppercase;
   }
   .upgrade-box-title {
-    font-size: 15px;
+    font-size: 22px;
     font-weight: 800;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
   }
   .upgrade-close {
-    background: none;
-    border: none;
-    color: #888;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.04);
+    color: #aaa;
     font: inherit;
-    font-size: 14px;
+    font-size: 16px;
+    line-height: 1;
     cursor: pointer;
-    transition: color 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
   }
-  .upgrade-close:hover { color: #fff; }
+  .upgrade-close:hover {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+  .upgrade-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .upgrade-stat {
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .upgrade-stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: #777;
+    text-transform: uppercase;
+  }
+  .upgrade-stat-val {
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+  }
+  .upgrade-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
   .upgrade-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 14px;
     padding: 16px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.025);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  }
+  .upgrade-item:hover {
+    transform: translateY(-1px);
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  }
+  .upgrade-item.bought {
+    opacity: 0.58;
+    border-style: dashed;
+  }
+  .upgrade-item.bought:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .upgrade-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+  .upgrade-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
   }
   .upgrade-info {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 0;
+  }
+  .upgrade-name-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
   }
   .upgrade-name {
     font-size: 15px;
     font-weight: 700;
     color: #fff;
   }
+  .upgrade-tag {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #bbb;
+    text-transform: uppercase;
+  }
   .upgrade-desc {
-    font-size: 13px;
+    font-size: 12.5px;
     color: #999;
+    line-height: 1.4;
   }
   .upgrade-buy {
     flex-shrink: 0;
-    padding: 10px 16px;
-    font-size: 13px;
-    font-weight: 700;
+    min-width: 82px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    font-variant-numeric: tabular-nums;
   }
   .upgrade-buy:disabled {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.09);
     color: #666;
     cursor: not-allowed;
     box-shadow: none;
@@ -385,29 +530,80 @@
     <div class="upgrade-panel" id="upgrade-panel">
       <div class="upgrade-box">
         <div class="upgrade-box-head">
-          <span class="upgrade-box-title">Upgrade</span>
-          <button class="upgrade-close" id="btn-upgrade-close">닫기</button>
-        </div>
-        <div class="upgrade-item">
-          <div class="upgrade-info">
-            <span class="upgrade-name">더블 클릭</span>
-            <span class="upgrade-desc">클릭당 점수 1 → 2 (1회 한정)</span>
+          <div class="upgrade-title-group">
+            <span class="upgrade-eyebrow">System Enhancement</span>
+            <span class="upgrade-box-title">Upgrades</span>
           </div>
-          <button class="btn upgrade-buy" id="btn-buy-double">100점</button>
+          <button class="upgrade-close" id="btn-upgrade-close" aria-label="닫기">✕</button>
         </div>
-        <div class="upgrade-item">
-          <div class="upgrade-info">
-            <span class="upgrade-name">바운스 볼 <span id="ball-count" style="color:#777;font-weight:500;">(0)</span></span>
-            <span class="upgrade-desc">벽·버튼에 튕길 때마다 +2점</span>
+
+        <div class="upgrade-stats">
+          <div class="upgrade-stat">
+            <span class="upgrade-stat-label">Score</span>
+            <span class="upgrade-stat-val" id="upgrade-score">0</span>
           </div>
-          <button class="btn upgrade-buy" id="btn-buy-ball">200점</button>
+          <div class="upgrade-stat">
+            <span class="upgrade-stat-label">Per Click</span>
+            <span class="upgrade-stat-val" id="upgrade-ppc">+1</span>
+          </div>
         </div>
-        <div class="upgrade-item">
-          <div class="upgrade-info">
-            <span class="upgrade-name">파워 클릭</span>
-            <span class="upgrade-desc">클릭당 점수 +3 (1회 한정)</span>
+
+        <div class="upgrade-list">
+          <div class="upgrade-item" id="item-double">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">×2</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">더블 클릭</span>
+                  <span class="upgrade-tag">CLICK</span>
+                </div>
+                <span class="upgrade-desc">클릭당 점수 1 → 2 (1회 한정)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-double">100점</button>
           </div>
-          <button class="btn upgrade-buy" id="btn-buy-plus3">300점</button>
+
+          <div class="upgrade-item" id="item-ball">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">●</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">바운스 볼 <span id="ball-count" style="color:#888;font-weight:500;">(0)</span></span>
+                  <span class="upgrade-tag">AUTO</span>
+                </div>
+                <span class="upgrade-desc">벽·버튼에 튕길 때마다 +2점</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-ball">200점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-plus3">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">+3</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">파워 클릭</span>
+                  <span class="upgrade-tag">CLICK</span>
+                </div>
+                <span class="upgrade-desc">클릭당 점수 +3 (1회 한정)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-plus3">300점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-enter">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">↵</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">엔터 클릭</span>
+                  <span class="upgrade-tag">INPUT</span>
+                </div>
+                <span class="upgrade-desc">Enter 키로도 버튼 클릭 가능 (1회 한정)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-enter">400점</button>
+          </div>
         </div>
       </div>
     </div>
@@ -429,6 +625,15 @@
   // ===== 패치노트 데이터 =====
   // 업데이트할 때마다 맨 위에 새 항목을 추가하세요. (v1부터 1씩 증가)
   const PATCH_NOTES = [
+    {
+      version: 5,
+      date: "2026-11-21",
+      changes: [
+        "중앙 버튼이 납작해지던 버그 수정",
+        "엔터 클릭 업그레이드 추가 (400점 소모, Enter 키로도 버튼 클릭 가능)",
+        "업그레이드 탭 UI 전면 리뉴얼 (실시간 스탯, 아이콘, 태그 추가)",
+      ],
+    },
     {
       version: 4,
       date: "2026-11-21",
@@ -506,6 +711,7 @@
   let upgradeUnlocked = false;
   let doubleBought = false;
   let plus3Bought = false;
+  let enterUnlocked = false;
   let balls = [];
 
   const scoreEl = document.getElementById("score");
@@ -516,7 +722,13 @@
   const buyDoubleBtn = document.getElementById("btn-buy-double");
   const buyBallBtn = document.getElementById("btn-buy-ball");
   const buyPlus3Btn = document.getElementById("btn-buy-plus3");
+  const buyEnterBtn = document.getElementById("btn-buy-enter");
   const ballCountEl = document.getElementById("ball-count");
+  const upgradeScoreEl = document.getElementById("upgrade-score");
+  const upgradePpcEl = document.getElementById("upgrade-ppc");
+  const itemDoubleEl = document.getElementById("item-double");
+  const itemPlus3El = document.getElementById("item-plus3");
+  const itemEnterEl = document.getElementById("item-enter");
 
   const ballCanvas = document.getElementById("ball-canvas");
   const ctx = ballCanvas.getContext("2d");
@@ -541,6 +753,10 @@
 
   function updateUpgradeUI() {
     upgradeTabBtn.classList.toggle("visible", upgradeUnlocked);
+    upgradeScoreEl.textContent = score.toLocaleString();
+    upgradePpcEl.textContent = `+${pointsPerClick}`;
+
+    itemDoubleEl.classList.toggle("bought", doubleBought);
     if (doubleBought) {
       buyDoubleBtn.textContent = "완료";
       buyDoubleBtn.disabled = true;
@@ -552,12 +768,22 @@
     ballCountEl.textContent = `(${balls.length})`;
     buyBallBtn.disabled = score < 200;
 
+    itemPlus3El.classList.toggle("bought", plus3Bought);
     if (plus3Bought) {
       buyPlus3Btn.textContent = "완료";
       buyPlus3Btn.disabled = true;
     } else {
       buyPlus3Btn.textContent = "300점";
       buyPlus3Btn.disabled = score < 300;
+    }
+
+    itemEnterEl.classList.toggle("bought", enterUnlocked);
+    if (enterUnlocked) {
+      buyEnterBtn.textContent = "완료";
+      buyEnterBtn.disabled = true;
+    } else {
+      buyEnterBtn.textContent = "400점";
+      buyEnterBtn.disabled = score < 400;
     }
   }
 
@@ -601,6 +827,7 @@
     upgradeUnlocked = false;
     doubleBought = false;
     plus3Bought = false;
+    enterUnlocked = false;
     balls = [];
     scoreEl.textContent = score;
     upgradePanel.classList.remove("open");
@@ -739,6 +966,14 @@
     updateUpgradeUI();
   });
 
+  buyEnterBtn.addEventListener("click", () => {
+    if (enterUnlocked || score < 400) return;
+    score -= 400;
+    enterUnlocked = true;
+    scoreEl.textContent = score;
+    updateUpgradeUI();
+  });
+
   gameBtn.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
     gameBtn.classList.add("pressed");
@@ -750,15 +985,21 @@
   gameBtn.addEventListener("pointercancel", releaseVisual);
   gameBtn.addEventListener("pointerleave", releaseVisual);
 
-  gameBtn.addEventListener("keydown", (e) => {
-    if ((e.key === "Enter" || e.key === " ") && !e.repeat) {
+  window.addEventListener("keydown", (e) => {
+    if (
+      e.key === "Enter" &&
+      !e.repeat &&
+      enterUnlocked &&
+      screens.game.classList.contains("active") &&
+      !upgradePanel.classList.contains("open")
+    ) {
       e.preventDefault();
       gameBtn.classList.add("pressed");
       pressButton();
     }
   });
-  gameBtn.addEventListener("keyup", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
+  window.addEventListener("keyup", (e) => {
+    if (e.key === "Enter") {
       releaseVisual();
     }
   });
