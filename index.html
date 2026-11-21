@@ -526,6 +526,54 @@
     transform: none;
   }
 
+  /* 설정 / 전적 */
+  .settings-wrap {
+    width: min(460px, 90vw);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .record-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .record-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .record-row:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .record-label {
+    font-size: 14px;
+    color: #aaa;
+  }
+  .record-value {
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .btn.menu.ghost {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: none;
+  }
+  .btn.menu.ghost:hover {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
   /* 패치노트 */
   .notes-wrap {
     width: min(560px, 90vw);
@@ -653,6 +701,7 @@
     <h1 class="title">BUTTON</h1>
     <button class="btn menu" id="btn-start">게임 시작</button>
     <button class="btn menu" id="btn-notes">패치노트</button>
+    <button class="btn menu" id="btn-settings">설정</button>
   </section>
 
   <!-- 인게임 -->
@@ -688,6 +737,14 @@
             <span class="upgrade-stat-label">Per Click</span>
             <span class="upgrade-stat-val" id="upgrade-ppc">+1</span>
           </div>
+        </div>
+
+        <div class="sale-banner" id="sale-banner">
+          <div class="sale-main">
+            <span class="sale-dot"></span>
+            <span class="sale-title">DJ SALE</span>
+          </div>
+          <span class="sale-info" id="sale-info"></span>
         </div>
 
         <div class="sale-banner" id="sale-banner">
@@ -878,6 +935,62 @@
               </div>
               <button class="btn upgrade-buy" id="btn-buy-dj">500점</button>
             </div>
+
+            <div class="upgrade-item" id="item-lightning">
+              <div class="upgrade-left">
+                <div class="upgrade-icon">⚡</div>
+                <div class="upgrade-info">
+                  <div class="upgrade-name-row">
+                    <span class="upgrade-name">번개 공 <span class="upgrade-level" id="lightning-count">(0)</span></span>
+                    <span class="upgrade-tag">REPEAT</span>
+                  </div>
+                  <span class="upgrade-desc">주황색 공. 30초마다 6초간 모든 공 속도 2배 (중첩 안 됨)</span>
+                </div>
+              </div>
+              <button class="btn upgrade-buy" id="btn-buy-lightning">5,000점</button>
+            </div>
+
+            <div class="upgrade-item" id="item-slow">
+              <div class="upgrade-left">
+                <div class="upgrade-icon">🐢</div>
+                <div class="upgrade-info">
+                  <div class="upgrade-name-row">
+                    <span class="upgrade-name">느린 공</span>
+                    <span class="upgrade-tag">ONCE</span>
+                  </div>
+                  <span class="upgrade-desc">다른 공 속도의 10% · 충돌 시 점수 50배</span>
+                </div>
+              </div>
+              <button class="btn upgrade-buy" id="btn-buy-slow">10,000점</button>
+            </div>
+
+            <div class="upgrade-item" id="item-summon">
+              <div class="upgrade-left">
+                <div class="upgrade-icon">◎</div>
+                <div class="upgrade-info">
+                  <div class="upgrade-name-row">
+                    <span class="upgrade-name">공 소환진</span>
+                    <span class="upgrade-tag">ONCE</span>
+                  </div>
+                  <span class="upgrade-desc">10초마다 5초간 2배 속도의 공 3개 소환</span>
+                </div>
+              </div>
+              <button class="btn upgrade-buy" id="btn-buy-summon">11,000점</button>
+            </div>
+
+            <div class="upgrade-item" id="item-worker">
+              <div class="upgrade-left">
+                <div class="upgrade-icon">◌</div>
+                <div class="upgrade-info">
+                  <div class="upgrade-name-row">
+                    <span class="upgrade-name">일꾼 공 <span class="upgrade-level" id="worker-count">(0/20)</span></span>
+                    <span class="upgrade-tag">REPEAT</span>
+                  </div>
+                  <span class="upgrade-desc">제자리에서 0.25~0.5초마다 버튼을 누름 (최대 20개)</span>
+                </div>
+              </div>
+              <button class="btn upgrade-buy" id="btn-buy-worker">5,000점</button>
+            </div>
           </div>
 
           <div class="shop-section">
@@ -888,13 +1001,13 @@
                 <div class="upgrade-icon">⏱</div>
                 <div class="upgrade-info">
                   <div class="upgrade-name-row">
-                    <span class="upgrade-name">오토클릭</span>
-                    <span class="upgrade-tag">ONCE</span>
+                    <span class="upgrade-name">오토클릭 <span class="upgrade-level" id="autoclick-lv">(Lv.0)</span></span>
+                    <span class="upgrade-tag">LEVEL</span>
                   </div>
-                  <span class="upgrade-desc">초당 버튼을 자동으로 1번 클릭</span>
+                  <span class="upgrade-desc" id="autoclick-desc">초당 1회 자동 클릭 · 강화마다 속도 +20%</span>
                 </div>
               </div>
-              <button class="btn upgrade-buy" id="btn-buy-autoclick">500점</button>
+              <button class="btn upgrade-buy" id="btn-buy-autoclick">1,000점</button>
             </div>
 
             <div class="upgrade-item" id="item-enter">
@@ -916,6 +1029,30 @@
     </div>
   </section>
 
+  <!-- 설정 -->
+  <section id="settings" class="screen">
+    <button class="back" data-go="title">← 나가기</button>
+    <div class="settings-wrap">
+      <div class="notes-header">
+        <h2 class="notes-title">Settings</h2>
+      </div>
+
+      <div class="record-card">
+        <div class="shop-section-title">Record</div>
+        <div class="record-row">
+          <span class="record-label">지금까지 누른 횟수</span>
+          <strong class="record-value" id="rec-clicks">0</strong>
+        </div>
+        <div class="record-row">
+          <span class="record-label">지금까지 누적 획득 점수</span>
+          <strong class="record-value" id="rec-earned">0</strong>
+        </div>
+      </div>
+
+      <button class="btn menu ghost" id="btn-reset">기록 초기화</button>
+    </div>
+  </section>
+
   <!-- 패치노트 -->
   <section id="notes" class="screen">
     <button class="back" data-go="title">← 나가기</button>
@@ -932,6 +1069,19 @@
   // ===== 패치노트 데이터 =====
   // 업데이트할 때마다 맨 위에 새 항목을 추가하세요. (v1부터 1씩 증가)
   const PATCH_NOTES = [
+    {
+      version: 8,
+      date: "2026-11-21",
+      changes: [
+        "DJ 공 아래에 세일 게이지 추가 (세일 중엔 남은 시간, 아닐 땐 다음 세일까지 차오름)",
+        "오토클릭 개편: 1,000점부터 시작, 강화마다 속도 +20%, 가격 +500",
+        "설정 화면 추가: 전적(지금까지 누른 횟수, 누적 획득 점수) 확인, 기록 초기화",
+        "번개 공 추가 (5,000점, 구매마다 +2,500): 30초마다 6초간 모든 공 속도 2배 (중첩 안 됨)",
+        "느린 공 추가 (10,000점, 1회 한정): 다른 공 속도의 10%, 충돌 점수 50배",
+        "공 소환진 추가 (11,000점, 1회 한정): 10초마다 5초간 2배 속도 공 3개 소환",
+        "일꾼 공 추가 (5,000점, 구매마다 +3,000, 최대 20개): 제자리에서 0.25~0.5초마다 버튼을 누름",
+      ],
+    },
     {
       version: 7,
       date: "2026-11-21",
@@ -1003,11 +1153,13 @@
     title: document.getElementById("title"),
     game: document.getElementById("game"),
     notes: document.getElementById("notes"),
+    settings: document.getElementById("settings"),
   };
 
   function go(name) {
     Object.values(screens).forEach(s => s.classList.remove("active"));
     screens[name].classList.add("active");
+    if (name === "settings") renderSettings();
   }
 
   // ===== 패치노트 렌더링 =====
@@ -1034,13 +1186,28 @@
   }
   renderNotes();
 
+  // ===== 설정 / 전적 =====
+  function renderSettings() {
+    document.getElementById("rec-clicks").textContent = totalClicks.toLocaleString();
+    document.getElementById("rec-earned").textContent = totalEarned.toLocaleString();
+  }
+
   // ===== 인게임 로직 =====
   const SAVE_KEY = "buttongame_save_v1";
-  const SALE_PERIOD = 50000;   // DJ 세일 주기 (50초)
-  const SALE_DURATION = 10000; // 세일 지속 시간 (10초)
+  const SALE_PERIOD = 50000;        // DJ 세일 주기 (50초)
+  const SALE_DURATION = 10000;      // DJ 세일 지속 (10초)
+  const LIGHTNING_PERIOD = 30000;   // 번개 공 주기 (30초)
+  const LIGHTNING_DURATION = 6000;  // 번개 효과 지속 (6초)
+  const SUMMON_PERIOD = 10000;      // 공 소환진 주기 (10초)
+  const SUMMON_DURATION = 5000;     // 소환된 공 유지 시간 (5초)
+  const SUMMON_COUNT = 3;
+  const WORKER_MAX = 20;
+  const AUTO_BASE_RATE = 1;         // 자동 클릭 1단계: 초당 1회
+  const AUTO_STEP = 0.2;            // 강화마다 +20%
 
   let score = 0;
   let totalClicks = 0;
+  let totalEarned = 0;
   let upgradeUnlocked = false;
   let doubleBought = false;
   let plus3Bought = false;
@@ -1048,16 +1215,26 @@
   let click5Bought = false;
   let click10Bought = false;
   let enterUnlocked = false;
-  let autoClickBought = false;
+  let autoClickLv = 0;          // 0 = 미구매, 1 = 초당 1회, 이후 구매마다 +20%
   let feverBought = false;
-  let ballPowerLv = 0;   // 기본 2 + ballPowerLv
-  let ballSpeedLv = 0;   // 최대 100, 레벨당 +5%
-  let luckLv = 0;        // 0 = 없음, 1 = 10%, 91 = 100%
+  let ballPowerLv = 0;          // 기본 2 + ballPowerLv
+  let ballSpeedLv = 0;          // 최대 100, 레벨당 +5%
+  let luckLv = 0;               // 0 = 없음, 1 = 10%, 91 = 100%
   let potionEndTime = 0;
   let feverEndTime = 0;
   let feverClickCounter = 0;
+  let djBoughtAt = 0;           // DJ 공 구매 시각 (0 = 미구매)
+  let summonBoughtAt = 0;       // 공 소환진 구매 시각 (0 = 미구매)
+  let summonDone = 0;           // 지금까지 소환 처리한 회차
+  let lightningBoughts = [];    // 번개 공 구매 시각 목록 (구매마다 1개)
+  let slowBought = false;       // 느린 공 (1회 한정)
+  let workerCount = 0;          // 일꾼 공 개수 (최대 20)
   let balls = [];
-  let djBoughtAt = 0;    // DJ 공 구매 시각 (0 = 미구매)
+
+  let saveTimer = null;
+  let resetting = false;
+  let autoAcc = 0;
+  let lastAutoTick = performance.now();
 
   const scoreEl = document.getElementById("score");
   const gameBtn = document.getElementById("game-btn");
@@ -1070,6 +1247,11 @@
   const buffPotionTimeEl = document.getElementById("buff-potion-time");
   const buffFeverEl = document.getElementById("buff-fever");
   const buffFeverTimeEl = document.getElementById("buff-fever-time");
+  const buffSaleEl = document.getElementById("buff-sale");
+  const buffSaleTimeEl = document.getElementById("buff-sale-time");
+
+  const saleBannerEl = document.getElementById("sale-banner");
+  const saleInfoEl = document.getElementById("sale-info");
 
   const buyPotionBtn = document.getElementById("btn-buy-potion");
   const buyDoubleBtn = document.getElementById("btn-buy-double");
@@ -1080,16 +1262,15 @@
   const buyClick4Btn = document.getElementById("btn-buy-click4");
   const buyEnterBtn = document.getElementById("btn-buy-enter");
   const buyLuckBtn = document.getElementById("btn-buy-luck");
-  const buyAutoClickBtn = document.getElementById("btn-buy-autoclick");
+  const buyAutoBtn = document.getElementById("btn-buy-autoclick");
   const buyClick5Btn = document.getElementById("btn-buy-click5");
   const buyFeverBtn = document.getElementById("btn-buy-fever");
   const buyClick10Btn = document.getElementById("btn-buy-click10");
   const buyDjBtn = document.getElementById("btn-buy-dj");
-  const itemDjEl = document.getElementById("item-dj");
-  const saleBannerEl = document.getElementById("sale-banner");
-  const saleInfoEl = document.getElementById("sale-info");
-  const buffSaleEl = document.getElementById("buff-sale");
-  const buffSaleTimeEl = document.getElementById("buff-sale-time");
+  const buyLightningBtn = document.getElementById("btn-buy-lightning");
+  const buySlowBtn = document.getElementById("btn-buy-slow");
+  const buySummonBtn = document.getElementById("btn-buy-summon");
+  const buyWorkerBtn = document.getElementById("btn-buy-worker");
 
   const ballCountEl = document.getElementById("ball-count");
   const ballPowerLvEl = document.getElementById("ball-power-lv");
@@ -1097,6 +1278,10 @@
   const ballSpeedLvEl = document.getElementById("ball-speed-lv");
   const luckLvEl = document.getElementById("luck-lv");
   const luckDescEl = document.getElementById("luck-desc");
+  const autoLvEl = document.getElementById("autoclick-lv");
+  const autoDescEl = document.getElementById("autoclick-desc");
+  const lightningCountEl = document.getElementById("lightning-count");
+  const workerCountEl = document.getElementById("worker-count");
   const upgradeScoreEl = document.getElementById("upgrade-score");
   const upgradePpcEl = document.getElementById("upgrade-ppc");
 
@@ -1106,10 +1291,14 @@
   const itemClick4El = document.getElementById("item-click4");
   const itemEnterEl = document.getElementById("item-enter");
   const itemLuckEl = document.getElementById("item-luck");
-  const itemAutoClickEl = document.getElementById("item-autoclick");
   const itemClick5El = document.getElementById("item-click5");
   const itemFeverEl = document.getElementById("item-fever");
   const itemClick10El = document.getElementById("item-click10");
+  const itemDjEl = document.getElementById("item-dj");
+  const itemLightningEl = document.getElementById("item-lightning");
+  const itemSlowEl = document.getElementById("item-slow");
+  const itemSummonEl = document.getElementById("item-summon");
+  const itemWorkerEl = document.getElementById("item-worker");
 
   const ballCanvas = document.getElementById("ball-canvas");
   const ctx = ballCanvas.getContext("2d");
@@ -1140,6 +1329,10 @@
     return pts;
   }
 
+  // 가격 함수는 모두 정가를 반환한다. 세일 차감은 spend()와 표시 단계에서 적용.
+  function regularBallCount() {
+    return balls.reduce((n, b) => n + (b.kind === "normal" ? 1 : 0), 0);
+  }
   function getBallPrice() { return 200 + regularBallCount() * 100; }
   function getBallSpeedPrice() { return 250 + ballSpeedLv * 100; }
   function getBallPowerPrice() { return 100 + ballPowerLv * 50; }
@@ -1147,12 +1340,23 @@
   function getLuckChance() { return luckLv === 0 ? 0 : Math.min(100, 9 + luckLv); }
   function getBallSpeedMult() { return 1 + ballSpeedLv * 0.05; }
   function getBallBouncePoints() { return 2 + ballPowerLv; }
+  function getAutoPrice() { return 1000 + autoClickLv * 500; }
+  function getAutoRate() {
+    if (autoClickLv <= 0) return 0;
+    return AUTO_BASE_RATE * (1 + AUTO_STEP * (autoClickLv - 1));
+  }
+  function getLightningPrice() { return 5000 + lightningBoughts.length * 2500; }
+  function getWorkerPrice() { return 5000 + workerCount * 3000; }
 
-  function saveGame() {
+  // ===== 세이브 (자주 쓰는 호출을 묶어서 저장) =====
+  function writeSave() {
+    if (resetting) return;
     try {
+      const now = Date.now();
       const data = {
         score,
         totalClicks,
+        totalEarned,
         upgradeUnlocked,
         doubleBought,
         plus3Bought,
@@ -1160,28 +1364,51 @@
         click5Bought,
         click10Bought,
         enterUnlocked,
-        autoClickBought,
+        autoClickLv,
         feverBought,
         ballPowerLv,
         ballSpeedLv,
         luckLv,
         ballCount: regularBallCount(),
         djBoughtAt,
+        summonBoughtAt,
+        lightningBoughts,
+        slowBought,
+        workerCount,
         feverClickCounter,
-        potionRemaining: Math.max(0, potionEndTime - Date.now()),
-        feverRemaining: Math.max(0, feverEndTime - Date.now()),
+        potionRemaining: Math.max(0, potionEndTime - now),
+        feverRemaining: Math.max(0, feverEndTime - now),
       };
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
     } catch (_) {}
   }
+
+  function saveGame() {
+    if (saveTimer) return;
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      writeSave();
+    }, 300);
+  }
+
+  window.addEventListener("beforeunload", () => {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    writeSave();
+  });
 
   function loadGame() {
     try {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return;
       const d = JSON.parse(raw);
+      const now = Date.now();
+
       score = Number(d.score) || 0;
       totalClicks = Number(d.totalClicks) || 0;
+      totalEarned = Number(d.totalEarned) || 0;
       upgradeUnlocked = Boolean(d.upgradeUnlocked || totalClicks >= 100);
       doubleBought = Boolean(d.doubleBought);
       plus3Bought = Boolean(d.plus3Bought);
@@ -1189,22 +1416,31 @@
       click5Bought = Boolean(d.click5Bought);
       click10Bought = Boolean(d.click10Bought);
       enterUnlocked = Boolean(d.enterUnlocked);
-      autoClickBought = Boolean(d.autoClickBought);
+      autoClickLv = Math.max(0, Number(d.autoClickLv) || (d.autoClickBought ? 1 : 0));
       feverBought = Boolean(d.feverBought);
       ballPowerLv = Math.max(0, Number(d.ballPowerLv) || 0);
       ballSpeedLv = Math.min(100, Math.max(0, Number(d.ballSpeedLv) || 0));
       luckLv = Math.min(91, Math.max(0, Number(d.luckLv) || 0));
       feverClickCounter = Math.max(0, Number(d.feverClickCounter) || 0);
-      const now = Date.now();
       potionEndTime = d.potionRemaining > 0 ? now + Number(d.potionRemaining) : 0;
       feverEndTime = d.feverRemaining > 0 ? now + Number(d.feverRemaining) : 0;
 
       djBoughtAt = Math.max(0, Number(d.djBoughtAt) || 0);
+      summonBoughtAt = Math.max(0, Number(d.summonBoughtAt) || 0);
+      summonDone = summonBoughtAt ? Math.floor((now - summonBoughtAt) / SUMMON_PERIOD) : 0;
+      lightningBoughts = Array.isArray(d.lightningBoughts)
+        ? d.lightningBoughts.map(Number).filter(t => t > 0)
+        : [];
+      slowBought = Boolean(d.slowBought);
+      workerCount = Math.min(WORKER_MAX, Math.max(0, Number(d.workerCount) || 0));
 
       balls = [];
-      const count = Math.max(0, Number(d.ballCount) || 0);
-      for (let i = 0; i < count; i++) spawnBall();
-      if (djBoughtAt > 0) spawnBall({ dj: true });
+      const normalCount = Math.max(0, Number(d.ballCount) || 0);
+      for (let i = 0; i < normalCount; i++) spawnBall("normal");
+      if (djBoughtAt > 0) spawnBall("dj");
+      for (let i = 0; i < lightningBoughts.length; i++) spawnBall("lightning");
+      if (slowBought) spawnBall("slow");
+      for (let i = 0; i < workerCount; i++) spawnBall("worker");
 
       scoreEl.textContent = score.toLocaleString();
       updateUpgradeUI();
@@ -1226,6 +1462,7 @@
 
   function addScore(amount, showFloat = false, isLucky = false) {
     score += amount;
+    if (amount > 0) totalEarned += amount;
     scoreEl.textContent = score.toLocaleString();
     scoreEl.classList.remove("bump");
     void scoreEl.offsetWidth;
@@ -1234,6 +1471,52 @@
       spawnFloatGain(amount, isLucky);
     }
     updateUpgradeUI();
+  }
+
+  // ===== 세일 (DJ 공) =====
+  // DJ 공 구매 후 50초부터 50초마다 10초간 세일. 첫 세일은 50초 뒤에 시작.
+  function getSaleState(now = Date.now()) {
+    if (!djBoughtAt) return { active: false, left: 0, nextIn: 0 };
+    const elapsed = now - djBoughtAt;
+    if (elapsed < SALE_PERIOD) {
+      return { active: false, left: 0, nextIn: SALE_PERIOD - elapsed };
+    }
+    const phase = elapsed % SALE_PERIOD;
+    if (phase < SALE_DURATION) {
+      return { active: true, left: SALE_DURATION - phase, nextIn: SALE_PERIOD - phase };
+    }
+    return { active: false, left: 0, nextIn: SALE_PERIOD - phase };
+  }
+
+  function applySale(base, saleOn) {
+    return saleOn ? Math.floor(base / 2) : base;
+  }
+
+  function priceHTML(base, saleOn) {
+    const price = applySale(base, saleOn);
+    if (price === base) return `${base.toLocaleString()}점`;
+    return `<s>${base.toLocaleString()}</s> ${price.toLocaleString()}점`;
+  }
+
+  function renderSaleBanner(sale) {
+    if (!djBoughtAt) {
+      saleBannerEl.classList.remove("show");
+      return;
+    }
+    saleBannerEl.classList.add("show");
+    saleBannerEl.classList.toggle("on", sale.active);
+    saleInfoEl.textContent = sale.active
+      ? `${Math.ceil(sale.left / 1000)}s 남음 · 전 품목 50% OFF`
+      : `다음 세일까지 ${Math.ceil(sale.nextIn / 1000)}s`;
+  }
+
+  // ===== 번개 공 =====
+  // 번개 공마다 구매 후 30초부터 30초 주기로 6초간 모든 공 속도 2배. 여러 개여도 효과는 중첩되지 않음.
+  function isLightningActive(now = Date.now()) {
+    return lightningBoughts.some(t => {
+      const elapsed = now - t;
+      return elapsed >= LIGHTNING_PERIOD && elapsed % LIGHTNING_PERIOD < LIGHTNING_DURATION;
+    });
   }
 
   function updateBuffUI() {
@@ -1263,47 +1546,6 @@
     }
   }
 
-  // ===== 상점 세일 (DJ 공) =====
-  // DJ 공을 산 시점부터 50초마다 10초간 세일. 첫 세일은 50초 뒤에 시작.
-  function getSaleState(now = Date.now()) {
-    if (!djBoughtAt) return { active: false, left: 0, nextIn: 0 };
-    const elapsed = now - djBoughtAt;
-    if (elapsed < SALE_PERIOD) {
-      return { active: false, left: 0, nextIn: SALE_PERIOD - elapsed };
-    }
-    const phase = elapsed % SALE_PERIOD;
-    if (phase < SALE_DURATION) {
-      return { active: true, left: SALE_DURATION - phase, nextIn: SALE_PERIOD - phase };
-    }
-    return { active: false, left: 0, nextIn: SALE_PERIOD - phase };
-  }
-
-  function applySale(base, saleOn) {
-    return saleOn ? Math.floor(base / 2) : base;
-  }
-
-  function priceHTML(base, saleOn) {
-    const price = applySale(base, saleOn);
-    if (price === base) return `${base.toLocaleString()}점`;
-    return `<s>${base.toLocaleString()}</s> ${price.toLocaleString()}점`;
-  }
-
-  function regularBallCount() {
-    return balls.reduce((n, b) => n + (b.dj ? 0 : 1), 0);
-  }
-
-  function renderSaleBanner(sale) {
-    if (!djBoughtAt) {
-      saleBannerEl.classList.remove("show");
-      return;
-    }
-    saleBannerEl.classList.add("show");
-    saleBannerEl.classList.toggle("on", sale.active);
-    saleInfoEl.textContent = sale.active
-      ? `${Math.ceil(sale.left / 1000)}s 남음 · 전 품목 50% OFF`
-      : `다음 세일까지 ${Math.ceil(sale.nextIn / 1000)}s`;
-  }
-
   function updateUpgradeUI() {
     const sale = getSaleState();
     const on = sale.active;
@@ -1313,12 +1555,11 @@
     upgradePpcEl.textContent = `+${getEffectiveClickPoints().toLocaleString()}`;
     renderSaleBanner(sale);
 
-    // 반복 구매 가능한 가격 버튼 (세일 중이면 할인가 표시)
+    // 반복 구매 가격 버튼 (세일 중이면 할인가 표시)
     const setBuy = (btn, base) => {
       btn.innerHTML = priceHTML(base, on);
       btn.disabled = score < applySale(base, on);
     };
-
     // 1회 한정 아이템
     const setOnce = (btn, itemEl, bought, base) => {
       itemEl.classList.toggle("bought", bought);
@@ -1337,7 +1578,6 @@
     setOnce(buyClick5Btn, itemClick5El, click5Bought, 500);
     setOnce(buyClick10Btn, itemClick10El, click10Bought, 1000);
 
-    const luckPrice = getLuckPrice();
     const luckChance = getLuckChance();
     luckLvEl.textContent = `(Lv.${luckLv})`;
     luckDescEl.textContent = luckLv === 0
@@ -1348,7 +1588,7 @@
       buyLuckBtn.textContent = "MAX";
       buyLuckBtn.disabled = true;
     } else {
-      setBuy(buyLuckBtn, luckPrice);
+      setBuy(buyLuckBtn, getLuckPrice());
     }
 
     // Buff
@@ -1374,13 +1614,39 @@
 
     setOnce(buyDjBtn, itemDjEl, djBoughtAt > 0, 500);
 
+    lightningCountEl.textContent = `(${lightningBoughts.length})`;
+    setBuy(buyLightningBtn, getLightningPrice());
+
+    setOnce(buySlowBtn, itemSlowEl, slowBought, 10000);
+    setOnce(buySummonBtn, itemSummonEl, summonBoughtAt > 0, 11000);
+
+    workerCountEl.textContent = `(${workerCount}/${WORKER_MAX})`;
+    itemWorkerEl.classList.toggle("bought", workerCount >= WORKER_MAX);
+    if (workerCount >= WORKER_MAX) {
+      buyWorkerBtn.textContent = "MAX";
+      buyWorkerBtn.disabled = true;
+    } else {
+      setBuy(buyWorkerBtn, getWorkerPrice());
+    }
+
     // Auto · Input
-    setOnce(buyAutoClickBtn, itemAutoClickEl, autoClickBought, 500);
+    autoLvEl.textContent = `(Lv.${autoClickLv})`;
+    autoDescEl.textContent = autoClickLv === 0
+      ? "초당 1회 자동 클릭 · 강화마다 속도 +20%"
+      : `초당 ${getAutoRate().toFixed(1)}회 자동 클릭 · 강화마다 속도 +20%`;
+    setBuy(buyAutoBtn, getAutoPrice());
     setOnce(buyEnterBtn, itemEnterEl, enterUnlocked, 400);
   }
 
-  function spawnBall({ dj = false } = {}) {
-    const r = dj ? 14 : 10;
+  // ===== 공 =====
+  // kind: normal(바운스 볼) · dj · lightning(번개) · slow(느린 공) · summon(소환된 공) · worker(일꾼, 제자리)
+  function randomPressDelay() {
+    return 250 + Math.random() * 250;
+  }
+
+  function spawnBall(kind = "normal") {
+    const isWorker = kind === "worker";
+    const r = kind === "dj" ? 14 : isWorker ? 9 : 10;
     const w = window.innerWidth;
     const h = window.innerHeight;
     const btnRect = gameBtn.getBoundingClientRect();
@@ -1400,17 +1666,40 @@
       }
     }
 
-    const angle = Math.random() * Math.PI * 2;
-    const baseSpeed = 260 + Math.random() * 80;
-    balls.push({
-      x,
-      y,
-      vx: Math.cos(angle) * baseSpeed,
-      vy: Math.sin(angle) * baseSpeed,
-      r,
-      dj,
-    });
+    const ball = { kind, x, y, r, vx: 0, vy: 0, expiresAt: 0, nextPressAt: 0 };
+    if (isWorker) {
+      ball.nextPressAt = Date.now() + randomPressDelay();
+    } else {
+      const angle = Math.random() * Math.PI * 2;
+      const baseSpeed = 260 + Math.random() * 80;
+      ball.vx = Math.cos(angle) * baseSpeed;
+      ball.vy = Math.sin(angle) * baseSpeed;
+    }
+    balls.push(ball);
+    return ball;
   }
+
+  function spawnSummon() {
+    const ball = spawnBall("summon");
+    ball.expiresAt = Date.now() + SUMMON_DURATION;
+  }
+
+  // 공 소환진 회차 처리 & 소환된 공 만료 (100ms마다)
+  function specialTick() {
+    const now = Date.now();
+    if (summonBoughtAt) {
+      const idx = Math.floor((now - summonBoughtAt) / SUMMON_PERIOD);
+      while (summonDone < idx) {
+        summonDone += 1;
+        for (let i = 0; i < SUMMON_COUNT; i++) spawnSummon();
+      }
+    }
+    for (let i = balls.length - 1; i >= 0; i--) {
+      const b = balls[i];
+      if (b.expiresAt && now >= b.expiresAt) balls.splice(i, 1);
+    }
+  }
+  setInterval(specialTick, 100);
 
   function collideRect(b, rect) {
     if (rect.width <= 0 || rect.height <= 0) return false;
@@ -1439,6 +1728,7 @@
     return false;
   }
 
+  // ===== 버튼 누르기 =====
   function pressButton() {
     const now = Date.now();
     totalClicks += 1;
@@ -1468,31 +1758,59 @@
     saveGame();
   }
 
-  // 버프 타이머 & 오토클릭
+  // 버프 타이머 & 상점 갱신
   setInterval(() => {
     updateBuffUI();
     updateUpgradeUI();
   }, 250);
 
+  // 자동 클릭 (초당 getAutoRate()회, 소수점은 누적)
   setInterval(() => {
-    if (autoClickBought && screens.game.classList.contains("active")) {
-      pressButton();
+    const t = performance.now();
+    const dt = (t - lastAutoTick) / 1000;
+    lastAutoTick = t;
+    if (autoClickLv > 0 && screens.game.classList.contains("active")) {
+      autoAcc += dt * getAutoRate();
+      let n = 0;
+      while (autoAcc >= 1 && n < 10) {
+        autoAcc -= 1;
+        n += 1;
+        pressButton();
+      }
+      if (autoAcc >= 1) autoAcc = 0;
+    } else {
+      autoAcc = 0;
     }
-  }, 1000);
+  }, 50);
 
   // 공 그리기 (블랙 & 화이트 테마)
-  function drawBall(b) {
+  function drawBall(b, color = "#fff", glow = "rgba(255, 255, 255, 0.5)") {
     ctx.save();
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-    ctx.fillStyle = "#fff";
-    ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+    ctx.fillStyle = color;
+    ctx.shadowColor = glow;
     ctx.shadowBlur = 12;
     ctx.fill();
     ctx.restore();
   }
 
-  // DJ 공: 흰 공 + 헤드폰 (위쪽 밴드 + 양쪽 이어컵)
+  // 일꾼 공: 제자리에 있는 링
+  function drawWorker(b) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // DJ 공: 흰 공 + 헤드폰 + 아래 세일 게이지
   function drawDjBall(b) {
     const band = b.r + 5;
     ctx.save();
@@ -1521,6 +1839,25 @@
       ctx.fill();
       ctx.stroke();
     }
+
+    // 세일 게이지: 세일 중에는 남은 세일 시간, 아닐 때는 다음 세일까지 차오름
+    const sale = getSaleState();
+    const frac = sale.active
+      ? sale.left / SALE_DURATION
+      : 1 - Math.min(1, sale.nextIn / (SALE_PERIOD - SALE_DURATION));
+    const gw = 40;
+    const gh = 4;
+    const gx = b.x - gw / 2;
+    const gy = b.y + band + 10;
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
+    ctx.fillRect(gx, gy, gw, gh);
+    ctx.fillStyle = sale.active ? "#fff" : "rgba(255, 255, 255, 0.7)";
+    if (sale.active) {
+      ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+      ctx.shadowBlur = 8;
+    }
+    ctx.fillRect(gx, gy, gw * Math.max(0, Math.min(1, frac)), gh);
     ctx.restore();
   }
 
@@ -1535,6 +1872,7 @@
     ctx.clearRect(0, 0, w, h);
 
     if (screens.game.classList.contains("active") && balls.length > 0) {
+      const wallNow = Date.now();
       const btnRect = gameBtn.getBoundingClientRect();
       const bcx = btnRect.left + btnRect.width / 2;
       const bcy = btnRect.top + btnRect.height / 2;
@@ -1543,32 +1881,48 @@
       const backRect = gameBackBtn.getBoundingClientRect();
       const shopRect = upgradeUnlocked ? upgradeTabBtn.getBoundingClientRect() : null;
       const speedMult = getBallSpeedMult();
-
-      let bounceCount = 0;
+      const boost = isLightningActive(wallNow) ? 2 : 1;
+      const points = getBallBouncePoints();
+      let gain = 0;
 
       for (const b of balls) {
-        b.x += b.vx * speedMult * dt;
-        b.y += b.vy * speedMult * dt;
+        if (b.kind === "worker") {
+          if (wallNow >= b.nextPressAt) {
+            b.nextPressAt = wallNow + randomPressDelay();
+            pressButton();
+          }
+          drawWorker(b);
+          continue;
+        }
+
+        let factor = speedMult * boost;
+        if (b.kind === "slow") factor *= 0.1;
+        if (b.kind === "summon") factor *= 2;
+
+        b.x += b.vx * factor * dt;
+        b.y += b.vy * factor * dt;
+
+        let hits = 0;
 
         // 화면 벽 충돌
         if (b.x - b.r <= 0) {
           b.x = b.r;
           b.vx = Math.abs(b.vx);
-          bounceCount += 1;
+          hits += 1;
         } else if (b.x + b.r >= w) {
           b.x = w - b.r;
           b.vx = -Math.abs(b.vx);
-          bounceCount += 1;
+          hits += 1;
         }
 
         if (b.y - b.r <= 0) {
           b.y = b.r;
           b.vy = Math.abs(b.vy);
-          bounceCount += 1;
+          hits += 1;
         } else if (b.y + b.r >= h) {
           b.y = h - b.r;
           b.vy = -Math.abs(b.vy);
-          bounceCount += 1;
+          hits += 1;
         }
 
         // 중앙 버튼(원형) 충돌
@@ -1586,20 +1940,25 @@
           if (dot < 0) {
             b.vx -= 2 * dot * nx;
             b.vy -= 2 * dot * ny;
-            bounceCount += 1;
+            hits += 1;
           }
         }
 
         // 나가기 버튼 & 상점 버튼 충돌
-        if (collideRect(b, backRect)) bounceCount += 1;
-        if (shopRect && collideRect(b, shopRect)) bounceCount += 1;
+        if (collideRect(b, backRect)) hits += 1;
+        if (shopRect && collideRect(b, shopRect)) hits += 1;
 
-        if (b.dj) drawDjBall(b);
+        // 느린 공은 충돌 점수 50배
+        gain += hits * points * (b.kind === "slow" ? 50 : 1);
+
+        if (b.kind === "dj") drawDjBall(b);
+        else if (b.kind === "lightning") drawBall(b, "#ff8a00", "rgba(255, 138, 0, 0.75)");
+        else if (b.kind === "slow") drawBall(b, "#9aa0a6", "rgba(255, 255, 255, 0.25)");
         else drawBall(b);
       }
 
-      if (bounceCount > 0) {
-        addScore(bounceCount * getBallBouncePoints(), false);
+      if (gain > 0) {
+        addScore(gain, false);
         saveGame();
       }
     }
@@ -1608,7 +1967,7 @@
   }
   requestAnimationFrame(animateBalls);
 
-  // 상점 열기/닫기
+  // ===== 상점 열기/닫기 =====
   upgradeTabBtn.addEventListener("click", () => {
     updateUpgradeUI();
     upgradePanel.classList.add("open");
@@ -1618,7 +1977,7 @@
     if (e.target === upgradePanel) upgradePanel.classList.remove("open");
   });
 
-  // 상점 구매 이벤트
+  // ===== 상점 구매 =====
   // 인자는 정가. 세일 중이면 절반으로 차감한다.
   function spend(basePrice) {
     const price = applySale(basePrice, getSaleState().active);
@@ -1652,7 +2011,7 @@
 
   buyBallBtn.addEventListener("click", () => {
     if (!spend(getBallPrice())) return;
-    spawnBall();
+    spawnBall("normal");
     updateUpgradeUI();
     saveGame();
   });
@@ -1692,9 +2051,9 @@
     saveGame();
   });
 
-  buyAutoClickBtn.addEventListener("click", () => {
-    if (autoClickBought || !spend(500)) return;
-    autoClickBought = true;
+  buyAutoBtn.addEventListener("click", () => {
+    if (!spend(getAutoPrice())) return;
+    autoClickLv += 1;
     updateUpgradeUI();
     saveGame();
   });
@@ -1724,9 +2083,41 @@
   buyDjBtn.addEventListener("click", () => {
     if (djBoughtAt || !spend(500)) return;
     djBoughtAt = Date.now();
-    spawnBall({ dj: true });
+    spawnBall("dj");
     updateUpgradeUI();
     updateBuffUI();
+    saveGame();
+  });
+
+  buyLightningBtn.addEventListener("click", () => {
+    if (!spend(getLightningPrice())) return;
+    lightningBoughts.push(Date.now());
+    spawnBall("lightning");
+    updateUpgradeUI();
+    saveGame();
+  });
+
+  buySlowBtn.addEventListener("click", () => {
+    if (slowBought || !spend(10000)) return;
+    slowBought = true;
+    spawnBall("slow");
+    updateUpgradeUI();
+    saveGame();
+  });
+
+  buySummonBtn.addEventListener("click", () => {
+    if (summonBoughtAt || !spend(11000)) return;
+    summonBoughtAt = Date.now();
+    summonDone = 0;
+    updateUpgradeUI();
+    saveGame();
+  });
+
+  buyWorkerBtn.addEventListener("click", () => {
+    if (workerCount >= WORKER_MAX || !spend(getWorkerPrice())) return;
+    workerCount += 1;
+    spawnBall("worker");
+    updateUpgradeUI();
     saveGame();
   });
 
@@ -1773,9 +2164,24 @@
     go("game");
   });
   document.getElementById("btn-notes").addEventListener("click", () => go("notes"));
+  document.getElementById("btn-settings").addEventListener("click", () => go("settings"));
   document.querySelectorAll("[data-go]").forEach(b =>
     b.addEventListener("click", () => go(b.dataset.go))
   );
+
+  // 기록 초기화: 저장 데이터 삭제 후 새로고침
+  document.getElementById("btn-reset").addEventListener("click", () => {
+    if (!confirm("모든 기록(점수, 업그레이드, 전적)을 초기화할까요?")) return;
+    resetting = true;
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    try {
+      localStorage.removeItem(SAVE_KEY);
+    } catch (_) {}
+    location.reload();
+  });
 </script>
 </body>
 </html>
