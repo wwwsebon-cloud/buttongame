@@ -80,7 +80,8 @@
   }
   #game > .back,
   #game > .upgrade-tab-btn,
-  #game > .upgrade-panel {
+  #game > .upgrade-panel,
+  #game > .buff-bar {
     position: fixed;
   }
   #game > .back,
@@ -104,15 +105,75 @@
   #game-btn.pressed { transform: scale(0.91); }
 
   .score {
-    font-size: 64px;
-    font-weight: 700;
+    font-size: clamp(56px, 12vw, 76px);
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
     min-height: 1em;
+    position: relative;
+    transition: text-shadow 0.15s ease;
   }
-  .score.bump { animation: bump 0.18s ease; }
-  @keyframes bump {
-    from { transform: scale(1.18); }
-    to   { transform: scale(1); }
+  .score.bump { animation: scorePop 0.22s cubic-bezier(0.22, 1.4, 0.36, 1); }
+  @keyframes scorePop {
+    0%   { transform: scale(1); text-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+    35%  { transform: scale(1.22) translateY(-4px); text-shadow: 0 0 28px rgba(255, 255, 255, 0.75); }
+    70%  { transform: scale(0.96) translateY(1px); }
+    100% { transform: scale(1) translateY(0); text-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+  }
+
+  .float-gain {
+    position: fixed;
+    pointer-events: none;
+    z-index: 15;
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
+    transform: translate(-50%, -50%);
+    animation: floatUp 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.85); }
+    30%  { opacity: 1; transform: translate(-50%, -85%) scale(1.12); }
+    100% { opacity: 0; transform: translate(-50%, -170%) scale(0.95); }
+  }
+
+  /* 하단 버프 바 */
+  .buff-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 12;
+    pointer-events: none;
+  }
+  .buff-pill {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(15, 15, 15, 0.88);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.14);
+  }
+  .buff-pill.active {
+    display: inline-flex;
+  }
+  .buff-pill.fever {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+    box-shadow: 0 0 26px rgba(255, 255, 255, 0.5);
   }
 
   .back {
@@ -522,17 +583,22 @@
   <!-- 인게임 -->
   <section id="game" class="screen">
     <canvas id="ball-canvas"></canvas>
-    <button class="back" data-go="title">← 나가기</button>
-    <button class="upgrade-tab-btn" id="btn-upgrade-tab">업그레이드</button>
+    <button class="back" id="btn-game-back" data-go="title">← 나가기</button>
+    <button class="upgrade-tab-btn" id="btn-upgrade-tab">상점</button>
     <div class="score" id="score">0</div>
     <button class="btn" id="game-btn">PRESS</button>
+
+    <div class="buff-bar">
+      <div class="buff-pill" id="buff-potion">🧪 포션 x2 <span id="buff-potion-time">30s</span></div>
+      <div class="buff-pill fever" id="buff-fever">⚡ FEVER x2 <span id="buff-fever-time">5s</span></div>
+    </div>
 
     <div class="upgrade-panel" id="upgrade-panel">
       <div class="upgrade-box">
         <div class="upgrade-box-head">
           <div class="upgrade-title-group">
             <span class="upgrade-eyebrow">System Enhancement</span>
-            <span class="upgrade-box-title">Upgrades</span>
+            <span class="upgrade-box-title">Shop</span>
           </div>
           <button class="upgrade-close" id="btn-upgrade-close" aria-label="닫기">✕</button>
         </div>
@@ -549,6 +615,20 @@
         </div>
 
         <div class="upgrade-list">
+          <div class="upgrade-item" id="item-potion">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">🧪</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">포션</span>
+                  <span class="upgrade-tag">BUFF</span>
+                </div>
+                <span class="upgrade-desc">30초간 클릭당 점수 100% 증가 (중첩 불가)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-potion">500점</button>
+          </div>
+
           <div class="upgrade-item" id="item-double">
             <div class="upgrade-left">
               <div class="upgrade-icon">×2</div>
@@ -557,10 +637,24 @@
                   <span class="upgrade-name">더블 클릭</span>
                   <span class="upgrade-tag">CLICK</span>
                 </div>
-                <span class="upgrade-desc">클릭당 점수 1 → 2 (1회 한정)</span>
+                <span class="upgrade-desc">클릭당 기본 점수 → 2 (1회 한정)</span>
               </div>
             </div>
             <button class="btn upgrade-buy" id="btn-buy-double">100점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-ball-power">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">◈</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">볼 파워 <span id="ball-power-lv" style="color:#888;font-weight:500;">(Lv.0)</span></span>
+                  <span class="upgrade-tag">BALL</span>
+                </div>
+                <span class="upgrade-desc">바운스 볼 충돌당 점수 +1 (현재 <span id="ball-power-val">2</span>점)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-ball-power">100점</button>
           </div>
 
           <div class="upgrade-item" id="item-ball">
@@ -571,10 +665,24 @@
                   <span class="upgrade-name">바운스 볼 <span id="ball-count" style="color:#888;font-weight:500;">(0)</span></span>
                   <span class="upgrade-tag">AUTO</span>
                 </div>
-                <span class="upgrade-desc">벽·버튼에 튕길 때마다 +2점</span>
+                <span class="upgrade-desc">벽·버튼에 튕기는 공 1개 추가</span>
               </div>
             </div>
             <button class="btn upgrade-buy" id="btn-buy-ball">200점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-ball-speed">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">»</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">볼 스피드 <span id="ball-speed-lv" style="color:#888;font-weight:500;">(0/100)</span></span>
+                  <span class="upgrade-tag">BALL</span>
+                </div>
+                <span class="upgrade-desc">바운스 볼 이동 속도 +5% (최대 100레벨)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-ball-speed">250점</button>
           </div>
 
           <div class="upgrade-item" id="item-plus3">
@@ -585,10 +693,24 @@
                   <span class="upgrade-name">파워 클릭</span>
                   <span class="upgrade-tag">CLICK</span>
                 </div>
-                <span class="upgrade-desc">클릭당 점수 +3 (1회 한정)</span>
+                <span class="upgrade-desc">클릭당 점수 +3 추가 (1회 한정)</span>
               </div>
             </div>
             <button class="btn upgrade-buy" id="btn-buy-plus3">300점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-click4">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">4</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">클릭 강화 IV</span>
+                  <span class="upgrade-tag">CLICK</span>
+                </div>
+                <span class="upgrade-desc">클릭당 기본 점수 → 4 (1회 한정)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-click4">400점</button>
           </div>
 
           <div class="upgrade-item" id="item-enter">
@@ -603,6 +725,76 @@
               </div>
             </div>
             <button class="btn upgrade-buy" id="btn-buy-enter">400점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-luck">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">✦</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">행운 <span id="luck-lv" style="color:#888;font-weight:500;">(Lv.0)</span></span>
+                  <span class="upgrade-tag">LUCK</span>
+                </div>
+                <span class="upgrade-desc" id="luck-desc">클릭 시 10% 확률로 +1 추가 점수 (최대 100%)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-luck">400점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-autoclick">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">⏱</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">오토클릭</span>
+                  <span class="upgrade-tag">AUTO</span>
+                </div>
+                <span class="upgrade-desc">초당 버튼을 자동으로 1번 클릭 (1회 한정)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-autoclick">500점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-click5">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">5</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">클릭 강화 V</span>
+                  <span class="upgrade-tag">CLICK</span>
+                </div>
+                <span class="upgrade-desc">클릭당 기본 점수 → 5 (1회 한정)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-click5">500점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-fever">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">⚡</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">피버 타임</span>
+                  <span class="upgrade-tag">FEVER</span>
+                </div>
+                <span class="upgrade-desc">50번 클릭마다 5초간 클릭 최종 점수 2배</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-fever">600점</button>
+          </div>
+
+          <div class="upgrade-item" id="item-click10">
+            <div class="upgrade-left">
+              <div class="upgrade-icon">10</div>
+              <div class="upgrade-info">
+                <div class="upgrade-name-row">
+                  <span class="upgrade-name">클릭 강화 X</span>
+                  <span class="upgrade-tag">CLICK</span>
+                </div>
+                <span class="upgrade-desc">클릭당 기본 점수 → 10 (1회 한정)</span>
+              </div>
+            </div>
+            <button class="btn upgrade-buy" id="btn-buy-click10">1,000점</button>
           </div>
         </div>
       </div>
@@ -625,6 +817,18 @@
   // ===== 패치노트 데이터 =====
   // 업데이트할 때마다 맨 위에 새 항목을 추가하세요. (v1부터 1씩 증가)
   const PATCH_NOTES = [
+    {
+      version: 6,
+      date: "2026-11-21",
+      changes: [
+        "클릭할 때마다 자동 저장되는 세이브 기능 추가",
+        "숫자 카운터 애니메이션 리뉴얼 및 플로팅 점수 효과 추가",
+        "업그레이드 탭 이름을 '상점'으로 변경",
+        "상점에 포션(500점, 30초간 클릭 점수 2배) 및 하단 버프 아이콘 추가",
+        "바운스 볼이 나가기·상점 버튼에도 튕기도록 개선",
+        "신규 업그레이드 대거 추가 (볼 파워/스피드, 오토클릭, 행운, 클릭 강화 4/5/10, 피버 타임)",
+      ],
+    },
     {
       version: 5,
       date: "2026-11-21",
@@ -705,30 +909,72 @@
   renderNotes();
 
   // ===== 인게임 로직 =====
+  const SAVE_KEY = "buttongame_save_v1";
+
   let score = 0;
   let totalClicks = 0;
-  let pointsPerClick = 1;
   let upgradeUnlocked = false;
   let doubleBought = false;
   let plus3Bought = false;
+  let click4Bought = false;
+  let click5Bought = false;
+  let click10Bought = false;
   let enterUnlocked = false;
+  let autoClickBought = false;
+  let feverBought = false;
+  let ballPowerLv = 0;   // 기본 2 + ballPowerLv
+  let ballSpeedLv = 0;   // 최대 100, 레벨당 +5%
+  let luckLv = 0;        // 0 = 없음, 1 = 10%, 91 = 100%
+  let potionEndTime = 0;
+  let feverEndTime = 0;
+  let feverClickCounter = 0;
   let balls = [];
 
   const scoreEl = document.getElementById("score");
   const gameBtn = document.getElementById("game-btn");
+  const gameBackBtn = document.getElementById("btn-game-back");
   const upgradeTabBtn = document.getElementById("btn-upgrade-tab");
   const upgradePanel = document.getElementById("upgrade-panel");
   const upgradeCloseBtn = document.getElementById("btn-upgrade-close");
+
+  const buffPotionEl = document.getElementById("buff-potion");
+  const buffPotionTimeEl = document.getElementById("buff-potion-time");
+  const buffFeverEl = document.getElementById("buff-fever");
+  const buffFeverTimeEl = document.getElementById("buff-fever-time");
+
+  const buyPotionBtn = document.getElementById("btn-buy-potion");
   const buyDoubleBtn = document.getElementById("btn-buy-double");
+  const buyBallPowerBtn = document.getElementById("btn-buy-ball-power");
   const buyBallBtn = document.getElementById("btn-buy-ball");
+  const buyBallSpeedBtn = document.getElementById("btn-buy-ball-speed");
   const buyPlus3Btn = document.getElementById("btn-buy-plus3");
+  const buyClick4Btn = document.getElementById("btn-buy-click4");
   const buyEnterBtn = document.getElementById("btn-buy-enter");
+  const buyLuckBtn = document.getElementById("btn-buy-luck");
+  const buyAutoClickBtn = document.getElementById("btn-buy-autoclick");
+  const buyClick5Btn = document.getElementById("btn-buy-click5");
+  const buyFeverBtn = document.getElementById("btn-buy-fever");
+  const buyClick10Btn = document.getElementById("btn-buy-click10");
+
   const ballCountEl = document.getElementById("ball-count");
+  const ballPowerLvEl = document.getElementById("ball-power-lv");
+  const ballPowerValEl = document.getElementById("ball-power-val");
+  const ballSpeedLvEl = document.getElementById("ball-speed-lv");
+  const luckLvEl = document.getElementById("luck-lv");
+  const luckDescEl = document.getElementById("luck-desc");
   const upgradeScoreEl = document.getElementById("upgrade-score");
   const upgradePpcEl = document.getElementById("upgrade-ppc");
+
   const itemDoubleEl = document.getElementById("item-double");
+  const itemBallSpeedEl = document.getElementById("item-ball-speed");
   const itemPlus3El = document.getElementById("item-plus3");
+  const itemClick4El = document.getElementById("item-click4");
   const itemEnterEl = document.getElementById("item-enter");
+  const itemLuckEl = document.getElementById("item-luck");
+  const itemAutoClickEl = document.getElementById("item-autoclick");
+  const itemClick5El = document.getElementById("item-click5");
+  const itemFeverEl = document.getElementById("item-fever");
+  const itemClick10El = document.getElementById("item-click10");
 
   const ballCanvas = document.getElementById("ball-canvas");
   const ctx = ballCanvas.getContext("2d");
@@ -742,49 +988,200 @@
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
-  function addScore(amount) {
+  function getBaseClickPoints() {
+    let base = 1;
+    if (doubleBought) base = Math.max(base, 2);
+    if (click4Bought) base = Math.max(base, 4);
+    if (click5Bought) base = Math.max(base, 5);
+    if (click10Bought) base = Math.max(base, 10);
+    if (plus3Bought) base += 3;
+    return base;
+  }
+
+  function getEffectiveClickPoints(now = Date.now()) {
+    let pts = getBaseClickPoints();
+    if (now < potionEndTime) pts *= 2;
+    if (now < feverEndTime) pts *= 2;
+    return pts;
+  }
+
+  function getBallPrice() { return 200 + balls.length * 100; }
+  function getBallSpeedPrice() { return 250 + ballSpeedLv * 100; }
+  function getBallPowerPrice() { return 100 + ballPowerLv * 50; }
+  function getLuckPrice() { return 400 + luckLv * 20; }
+  function getLuckChance() { return luckLv === 0 ? 0 : Math.min(100, 9 + luckLv); }
+  function getBallSpeedMult() { return 1 + ballSpeedLv * 0.05; }
+  function getBallBouncePoints() { return 2 + ballPowerLv; }
+
+  function saveGame() {
+    try {
+      const data = {
+        score,
+        totalClicks,
+        upgradeUnlocked,
+        doubleBought,
+        plus3Bought,
+        click4Bought,
+        click5Bought,
+        click10Bought,
+        enterUnlocked,
+        autoClickBought,
+        feverBought,
+        ballPowerLv,
+        ballSpeedLv,
+        luckLv,
+        ballCount: balls.length,
+        feverClickCounter,
+        potionRemaining: Math.max(0, potionEndTime - Date.now()),
+        feverRemaining: Math.max(0, feverEndTime - Date.now()),
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch (_) {}
+  }
+
+  function loadGame() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      score = Number(d.score) || 0;
+      totalClicks = Number(d.totalClicks) || 0;
+      upgradeUnlocked = Boolean(d.upgradeUnlocked || totalClicks >= 100);
+      doubleBought = Boolean(d.doubleBought);
+      plus3Bought = Boolean(d.plus3Bought);
+      click4Bought = Boolean(d.click4Bought);
+      click5Bought = Boolean(d.click5Bought);
+      click10Bought = Boolean(d.click10Bought);
+      enterUnlocked = Boolean(d.enterUnlocked);
+      autoClickBought = Boolean(d.autoClickBought);
+      feverBought = Boolean(d.feverBought);
+      ballPowerLv = Math.max(0, Number(d.ballPowerLv) || 0);
+      ballSpeedLv = Math.min(100, Math.max(0, Number(d.ballSpeedLv) || 0));
+      luckLv = Math.min(91, Math.max(0, Number(d.luckLv) || 0));
+      feverClickCounter = Math.max(0, Number(d.feverClickCounter) || 0);
+      const now = Date.now();
+      potionEndTime = d.potionRemaining > 0 ? now + Number(d.potionRemaining) : 0;
+      feverEndTime = d.feverRemaining > 0 ? now + Number(d.feverRemaining) : 0;
+
+      balls = [];
+      const count = Math.max(0, Number(d.ballCount) || 0);
+      for (let i = 0; i < count; i++) spawnBall();
+
+      scoreEl.textContent = score.toLocaleString();
+      updateUpgradeUI();
+      updateBuffUI();
+    } catch (_) {}
+  }
+
+  function spawnFloatGain(amount, isLucky = false) {
+    const rect = scoreEl.getBoundingClientRect();
+    const el = document.createElement("span");
+    el.className = "float-gain";
+    el.textContent = isLucky ? `+${amount} ✦` : `+${amount}`;
+    const offsetX = (Math.random() - 0.5) * 90;
+    el.style.left = `${rect.left + rect.width / 2 + offsetX}px`;
+    el.style.top = `${rect.top + 8}px`;
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+  }
+
+  function addScore(amount, showFloat = false, isLucky = false) {
     score += amount;
-    scoreEl.textContent = score;
+    scoreEl.textContent = score.toLocaleString();
     scoreEl.classList.remove("bump");
-    void scoreEl.offsetWidth; // 애니메이션 재시작
+    void scoreEl.offsetWidth;
     scoreEl.classList.add("bump");
+    if (showFloat && screens.game.classList.contains("active")) {
+      spawnFloatGain(amount, isLucky);
+    }
     updateUpgradeUI();
+  }
+
+  function updateBuffUI() {
+    const now = Date.now();
+    const potionLeft = Math.ceil((potionEndTime - now) / 1000);
+    if (potionLeft > 0) {
+      buffPotionEl.classList.add("active");
+      buffPotionTimeEl.textContent = `${potionLeft}s`;
+    } else {
+      buffPotionEl.classList.remove("active");
+    }
+
+    const feverLeft = Math.ceil((feverEndTime - now) / 1000);
+    if (feverLeft > 0) {
+      buffFeverEl.classList.add("active");
+      buffFeverTimeEl.textContent = `${feverLeft}s`;
+    } else {
+      buffFeverEl.classList.remove("active");
+    }
+  }
+
+  function setOneTimeBtn(btn, itemEl, bought, price) {
+    itemEl.classList.toggle("bought", bought);
+    if (bought) {
+      btn.textContent = "완료";
+      btn.disabled = true;
+    } else {
+      btn.textContent = `${price.toLocaleString()}점`;
+      btn.disabled = score < price;
+    }
   }
 
   function updateUpgradeUI() {
     upgradeTabBtn.classList.toggle("visible", upgradeUnlocked);
     upgradeScoreEl.textContent = score.toLocaleString();
-    upgradePpcEl.textContent = `+${pointsPerClick}`;
+    upgradePpcEl.textContent = `+${getEffectiveClickPoints().toLocaleString()}`;
 
-    itemDoubleEl.classList.toggle("bought", doubleBought);
-    if (doubleBought) {
-      buyDoubleBtn.textContent = "완료";
-      buyDoubleBtn.disabled = true;
-    } else {
-      buyDoubleBtn.textContent = "100점";
-      buyDoubleBtn.disabled = score < 100;
-    }
+    buyPotionBtn.textContent = "500점";
+    buyPotionBtn.disabled = score < 500;
 
+    setOneTimeBtn(buyDoubleBtn, itemDoubleEl, doubleBought, 100);
+
+    const bpPrice = getBallPowerPrice();
+    ballPowerLvEl.textContent = `(Lv.${ballPowerLv})`;
+    ballPowerValEl.textContent = getBallBouncePoints();
+    buyBallPowerBtn.textContent = `${bpPrice.toLocaleString()}점`;
+    buyBallPowerBtn.disabled = score < bpPrice;
+
+    const ballPrice = getBallPrice();
     ballCountEl.textContent = `(${balls.length})`;
-    buyBallBtn.disabled = score < 200;
+    buyBallBtn.textContent = `${ballPrice.toLocaleString()}점`;
+    buyBallBtn.disabled = score < ballPrice;
 
-    itemPlus3El.classList.toggle("bought", plus3Bought);
-    if (plus3Bought) {
-      buyPlus3Btn.textContent = "완료";
-      buyPlus3Btn.disabled = true;
+    const bsPrice = getBallSpeedPrice();
+    ballSpeedLvEl.textContent = `(${ballSpeedLv}/100)`;
+    itemBallSpeedEl.classList.toggle("bought", ballSpeedLv >= 100);
+    if (ballSpeedLv >= 100) {
+      buyBallSpeedBtn.textContent = "MAX";
+      buyBallSpeedBtn.disabled = true;
     } else {
-      buyPlus3Btn.textContent = "300점";
-      buyPlus3Btn.disabled = score < 300;
+      buyBallSpeedBtn.textContent = `${bsPrice.toLocaleString()}점`;
+      buyBallSpeedBtn.disabled = score < bsPrice;
     }
 
-    itemEnterEl.classList.toggle("bought", enterUnlocked);
-    if (enterUnlocked) {
-      buyEnterBtn.textContent = "완료";
-      buyEnterBtn.disabled = true;
+    setOneTimeBtn(buyPlus3Btn, itemPlus3El, plus3Bought, 300);
+    setOneTimeBtn(buyClick4Btn, itemClick4El, click4Bought, 400);
+    setOneTimeBtn(buyEnterBtn, itemEnterEl, enterUnlocked, 400);
+
+    const luckPrice = getLuckPrice();
+    const luckChance = getLuckChance();
+    luckLvEl.textContent = `(Lv.${luckLv})`;
+    luckDescEl.textContent = luckLv === 0
+      ? "클릭 시 10% 확률로 +1 추가 점수 (최대 100%)"
+      : `클릭 시 ${luckChance}% 확률로 +1 추가 점수 (최대 100%)`;
+    itemLuckEl.classList.toggle("bought", luckLv >= 91);
+    if (luckLv >= 91) {
+      buyLuckBtn.textContent = "MAX";
+      buyLuckBtn.disabled = true;
     } else {
-      buyEnterBtn.textContent = "400점";
-      buyEnterBtn.disabled = score < 400;
+      buyLuckBtn.textContent = `${luckPrice.toLocaleString()}점`;
+      buyLuckBtn.disabled = score < luckPrice;
     }
+
+    setOneTimeBtn(buyAutoClickBtn, itemAutoClickEl, autoClickBought, 500);
+    setOneTimeBtn(buyClick5Btn, itemClick5El, click5Bought, 500);
+    setOneTimeBtn(buyFeverBtn, itemFeverEl, feverBought, 600);
+    setOneTimeBtn(buyClick10Btn, itemClick10El, click10Bought, 1000);
   }
 
   function spawnBall() {
@@ -796,12 +1193,11 @@
     const bcy = btnRect.top + btnRect.height / 2;
     const br = btnRect.width / 2;
 
-    // 버튼과 겹치지 않는 위치에 생성
-    let x = r + 20;
-    let y = r + 20;
+    let x = r + 24;
+    let y = r + 24;
     for (let i = 0; i < 20; i++) {
-      const tx = r + 20 + Math.random() * Math.max(10, w - (r + 20) * 2);
-      const ty = r + 20 + Math.random() * Math.max(10, h - (r + 20) * 2);
+      const tx = r + 24 + Math.random() * Math.max(10, w - (r + 24) * 2);
+      const ty = r + 24 + Math.random() * Math.max(10, h - (r + 24) * 2);
       if (Math.hypot(tx - bcx, ty - bcy) > br + r + 24) {
         x = tx;
         y = ty;
@@ -810,38 +1206,83 @@
     }
 
     const angle = Math.random() * Math.PI * 2;
-    const speed = 260 + Math.random() * 80;
+    const baseSpeed = 260 + Math.random() * 80;
     balls.push({
       x,
       y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
+      vx: Math.cos(angle) * baseSpeed,
+      vy: Math.sin(angle) * baseSpeed,
       r,
     });
   }
 
-  function resetGame() {
-    score = 0;
-    totalClicks = 0;
-    pointsPerClick = 1;
-    upgradeUnlocked = false;
-    doubleBought = false;
-    plus3Bought = false;
-    enterUnlocked = false;
-    balls = [];
-    scoreEl.textContent = score;
-    upgradePanel.classList.remove("open");
-    ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    updateUpgradeUI();
+  function collideRect(b, rect) {
+    if (rect.width <= 0 || rect.height <= 0) return false;
+    const closestX = Math.max(rect.left, Math.min(b.x, rect.right));
+    const closestY = Math.max(rect.top, Math.min(b.y, rect.bottom));
+    const dx = b.x - closestX;
+    const dy = b.y - closestY;
+    const distSq = dx * dx + dy * dy;
+    if (distSq >= b.r * b.r) return false;
+
+    const dist = Math.sqrt(distSq);
+    if (dist === 0) {
+      b.vy = -b.vy;
+      return true;
+    }
+    const nx = dx / dist;
+    const ny = dy / dist;
+    b.x = closestX + nx * b.r;
+    b.y = closestY + ny * b.r;
+    const dot = b.vx * nx + b.vy * ny;
+    if (dot < 0) {
+      b.vx -= 2 * dot * nx;
+      b.vy -= 2 * dot * ny;
+      return true;
+    }
+    return false;
   }
 
   function pressButton() {
+    const now = Date.now();
     totalClicks += 1;
     if (!upgradeUnlocked && totalClicks >= 100) {
       upgradeUnlocked = true;
     }
-    addScore(pointsPerClick);
+
+    if (feverBought) {
+      feverClickCounter += 1;
+      if (feverClickCounter >= 50) {
+        feverClickCounter = 0;
+        feverEndTime = now + 5000;
+        updateBuffUI();
+      }
+    }
+
+    let gain = getBaseClickPoints();
+    let lucky = false;
+    if (luckLv > 0 && Math.random() * 100 < getLuckChance()) {
+      gain += 1;
+      lucky = true;
+    }
+    if (now < potionEndTime) gain *= 2;
+    if (now < feverEndTime) gain *= 2;
+
+    addScore(gain, true, lucky);
+    saveGame();
   }
+
+  // 버프 타이머 & 오토클릭
+  setInterval(() => {
+    updateBuffUI();
+    updateUpgradeUI();
+  }, 250);
+
+  setInterval(() => {
+    if (autoClickBought && screens.game.classList.contains("active")) {
+      pressButton();
+    }
+  }, 1000);
 
   // 공 물리 & 렌더링 루프
   let lastFrameTime = performance.now();
@@ -859,11 +1300,15 @@
       const bcy = btnRect.top + btnRect.height / 2;
       const br = btnRect.width / 2;
 
+      const backRect = gameBackBtn.getBoundingClientRect();
+      const shopRect = upgradeUnlocked ? upgradeTabBtn.getBoundingClientRect() : null;
+      const speedMult = getBallSpeedMult();
+
       let bounceCount = 0;
 
       for (const b of balls) {
-        b.x += b.vx * dt;
-        b.y += b.vy * dt;
+        b.x += b.vx * speedMult * dt;
+        b.y += b.vy * speedMult * dt;
 
         // 화면 벽 충돌
         if (b.x - b.r <= 0) {
@@ -905,6 +1350,10 @@
           }
         }
 
+        // 나가기 버튼 & 상점 버튼 충돌
+        if (collideRect(b, backRect)) bounceCount += 1;
+        if (shopRect && collideRect(b, shopRect)) bounceCount += 1;
+
         // 공 그리기 (블랙 & 화이트 테마)
         ctx.save();
         ctx.beginPath();
@@ -917,7 +1366,8 @@
       }
 
       if (bounceCount > 0) {
-        addScore(bounceCount * 2);
+        addScore(bounceCount * getBallBouncePoints(), false);
+        saveGame();
       }
     }
 
@@ -925,54 +1375,119 @@
   }
   requestAnimationFrame(animateBalls);
 
+  // 상점 열기/닫기
   upgradeTabBtn.addEventListener("click", () => {
     updateUpgradeUI();
     upgradePanel.classList.add("open");
   });
-
-  upgradeCloseBtn.addEventListener("click", () => {
-    upgradePanel.classList.remove("open");
+  upgradeCloseBtn.addEventListener("click", () => upgradePanel.classList.remove("open"));
+  upgradePanel.addEventListener("click", (e) => {
+    if (e.target === upgradePanel) upgradePanel.classList.remove("open");
   });
 
-  upgradePanel.addEventListener("click", (e) => {
-    if (e.target === upgradePanel) {
-      upgradePanel.classList.remove("open");
-    }
+  // 상점 구매 이벤트
+  function spend(price) {
+    if (score < price) return false;
+    score -= price;
+    scoreEl.textContent = score.toLocaleString();
+    return true;
+  }
+
+  buyPotionBtn.addEventListener("click", () => {
+    if (!spend(500)) return;
+    potionEndTime = Date.now() + 30000;
+    updateBuffUI();
+    updateUpgradeUI();
+    saveGame();
   });
 
   buyDoubleBtn.addEventListener("click", () => {
-    if (doubleBought || score < 100) return;
-    score -= 100;
-    pointsPerClick += 1;
+    if (doubleBought || !spend(100)) return;
     doubleBought = true;
-    scoreEl.textContent = score;
     updateUpgradeUI();
+    saveGame();
+  });
+
+  buyBallPowerBtn.addEventListener("click", () => {
+    if (!spend(getBallPowerPrice())) return;
+    ballPowerLv += 1;
+    updateUpgradeUI();
+    saveGame();
   });
 
   buyBallBtn.addEventListener("click", () => {
-    if (score < 200) return;
-    score -= 200;
+    if (!spend(getBallPrice())) return;
     spawnBall();
-    scoreEl.textContent = score;
     updateUpgradeUI();
+    saveGame();
+  });
+
+  buyBallSpeedBtn.addEventListener("click", () => {
+    if (ballSpeedLv >= 100 || !spend(getBallSpeedPrice())) return;
+    ballSpeedLv += 1;
+    updateUpgradeUI();
+    saveGame();
   });
 
   buyPlus3Btn.addEventListener("click", () => {
-    if (plus3Bought || score < 300) return;
-    score -= 300;
-    pointsPerClick += 3;
+    if (plus3Bought || !spend(300)) return;
     plus3Bought = true;
-    scoreEl.textContent = score;
     updateUpgradeUI();
+    saveGame();
+  });
+
+  buyClick4Btn.addEventListener("click", () => {
+    if (click4Bought || !spend(400)) return;
+    click4Bought = true;
+    updateUpgradeUI();
+    saveGame();
   });
 
   buyEnterBtn.addEventListener("click", () => {
-    if (enterUnlocked || score < 400) return;
-    score -= 400;
+    if (enterUnlocked || !spend(400)) return;
     enterUnlocked = true;
-    scoreEl.textContent = score;
     updateUpgradeUI();
+    saveGame();
   });
+
+  buyLuckBtn.addEventListener("click", () => {
+    if (luckLv >= 91 || !spend(getLuckPrice())) return;
+    luckLv += 1;
+    updateUpgradeUI();
+    saveGame();
+  });
+
+  buyAutoClickBtn.addEventListener("click", () => {
+    if (autoClickBought || !spend(500)) return;
+    autoClickBought = true;
+    updateUpgradeUI();
+    saveGame();
+  });
+
+  buyClick5Btn.addEventListener("click", () => {
+    if (click5Bought || !spend(500)) return;
+    click5Bought = true;
+    updateUpgradeUI();
+    saveGame();
+  });
+
+  buyFeverBtn.addEventListener("click", () => {
+    if (feverBought || !spend(600)) return;
+    feverBought = true;
+    feverClickCounter = 0;
+    updateUpgradeUI();
+    saveGame();
+  });
+
+  buyClick10Btn.addEventListener("click", () => {
+    if (click10Bought || !spend(1000)) return;
+    click10Bought = true;
+    updateUpgradeUI();
+    saveGame();
+  });
+
+  // 초기 세이브 로드
+  loadGame();
 
   gameBtn.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
@@ -1006,7 +1521,9 @@
 
   // ===== 버튼 이벤트 =====
   document.getElementById("btn-start").addEventListener("click", () => {
-    resetGame();
+    upgradePanel.classList.remove("open");
+    updateUpgradeUI();
+    updateBuffUI();
     go("game");
   });
   document.getElementById("btn-notes").addEventListener("click", () => go("notes"));
