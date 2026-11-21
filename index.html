@@ -103,6 +103,124 @@
   }
   .back:hover { color: #fff; }
 
+  /* 업그레이드 탭 & 패널 */
+  .upgrade-tab-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-6px);
+    transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+  .upgrade-tab-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .upgrade-tab-btn:hover {
+    background: #fff;
+    color: #000;
+    border-color: #fff;
+  }
+  .upgrade-panel {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+    z-index: 20;
+  }
+  .upgrade-panel.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .upgrade-box {
+    width: min(400px, 88vw);
+    padding: 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .upgrade-box-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .upgrade-box-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .upgrade-close {
+    background: none;
+    border: none;
+    color: #888;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+  .upgrade-close:hover { color: #fff; }
+  .upgrade-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .upgrade-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .upgrade-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .upgrade-desc {
+    font-size: 13px;
+    color: #999;
+  }
+  .upgrade-buy {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .upgrade-buy:disabled {
+    background: rgba(255, 255, 255, 0.12);
+    color: #666;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
   /* 패치노트 */
   .notes-wrap {
     width: min(560px, 90vw);
@@ -235,8 +353,25 @@
   <!-- 인게임 -->
   <section id="game" class="screen">
     <button class="back" data-go="title">← 나가기</button>
+    <button class="upgrade-tab-btn" id="btn-upgrade-tab">업그레이드</button>
     <div class="score" id="score">0</div>
     <button class="btn" id="game-btn">PRESS</button>
+
+    <div class="upgrade-panel" id="upgrade-panel">
+      <div class="upgrade-box">
+        <div class="upgrade-box-head">
+          <span class="upgrade-box-title">Upgrade</span>
+          <button class="upgrade-close" id="btn-upgrade-close">닫기</button>
+        </div>
+        <div class="upgrade-item">
+          <div class="upgrade-info">
+            <span class="upgrade-name">더블 클릭</span>
+            <span class="upgrade-desc">클릭당 점수 1 → 2 (1회 한정)</span>
+          </div>
+          <button class="btn upgrade-buy" id="btn-buy-double">100점</button>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- 패치노트 -->
@@ -255,6 +390,14 @@
   // ===== 패치노트 데이터 =====
   // 업데이트할 때마다 맨 위에 새 항목을 추가하세요. (v1부터 1씩 증가)
   const PATCH_NOTES = [
+    {
+      version: 3,
+      date: "2026-11-21",
+      changes: [
+        "버튼을 100번 누르면 업그레이드 탭 해금",
+        "100점을 소모해 클릭당 점수를 2로 올리는 업그레이드 추가 (1회 한정)",
+      ],
+    },
     {
       version: 2,
       date: "2026-11-21",
@@ -311,21 +454,77 @@
 
   // ===== 인게임 로직 =====
   let score = 0;
+  let totalClicks = 0;
+  let pointsPerClick = 1;
+  let upgradeUnlocked = false;
+  let doubleBought = false;
+
   const scoreEl = document.getElementById("score");
   const gameBtn = document.getElementById("game-btn");
+  const upgradeTabBtn = document.getElementById("btn-upgrade-tab");
+  const upgradePanel = document.getElementById("upgrade-panel");
+  const upgradeCloseBtn = document.getElementById("btn-upgrade-close");
+  const buyDoubleBtn = document.getElementById("btn-buy-double");
+
+  function updateUpgradeUI() {
+    upgradeTabBtn.classList.toggle("visible", upgradeUnlocked);
+    if (doubleBought) {
+      buyDoubleBtn.textContent = "완료";
+      buyDoubleBtn.disabled = true;
+    } else {
+      buyDoubleBtn.textContent = "100점";
+      buyDoubleBtn.disabled = score < 100;
+    }
+  }
 
   function resetGame() {
     score = 0;
+    totalClicks = 0;
+    pointsPerClick = 1;
+    upgradeUnlocked = false;
+    doubleBought = false;
     scoreEl.textContent = score;
+    upgradePanel.classList.remove("open");
+    updateUpgradeUI();
   }
 
   function pressButton() {
-    score += 1;
+    totalClicks += 1;
+    score += pointsPerClick;
     scoreEl.textContent = score;
     scoreEl.classList.remove("bump");
     void scoreEl.offsetWidth; // 애니메이션 재시작
     scoreEl.classList.add("bump");
+
+    if (!upgradeUnlocked && totalClicks >= 100) {
+      upgradeUnlocked = true;
+    }
+    updateUpgradeUI();
   }
+
+  upgradeTabBtn.addEventListener("click", () => {
+    updateUpgradeUI();
+    upgradePanel.classList.add("open");
+  });
+
+  upgradeCloseBtn.addEventListener("click", () => {
+    upgradePanel.classList.remove("open");
+  });
+
+  upgradePanel.addEventListener("click", (e) => {
+    if (e.target === upgradePanel) {
+      upgradePanel.classList.remove("open");
+    }
+  });
+
+  buyDoubleBtn.addEventListener("click", () => {
+    if (doubleBought || score < 100) return;
+    score -= 100;
+    pointsPerClick = 2;
+    doubleBought = true;
+    scoreEl.textContent = score;
+    updateUpgradeUI();
+  });
 
   gameBtn.addEventListener("pointerdown", (e) => {
     if (e.button !== 0 && e.pointerType === "mouse") return;
